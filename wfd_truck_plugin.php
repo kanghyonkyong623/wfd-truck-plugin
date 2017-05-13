@@ -870,7 +870,7 @@ function wfd_ref_truck_plugin_activation()
     $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
     $sql_client_info = "CREATE TABLE IF NOT EXISTS $tbl_client_info (
     `id` int(9) NOT NULL AUTO_INCREMENT,
-    `type` int(9) NOT NULL DEFAULT '1',,
+    `type` int(9) NOT NULL DEFAULT '1',
     `company` varchar(250) NOT NULL,
     `email` varchar(100) NOT NULL,
     `username` varchar(50) NOT NULL,
@@ -1077,7 +1077,7 @@ function wfd_truck_user_dashboard_fn()
 
     wfd_truck_add_script_css();
 
-    if (!$_GET['action'])
+    if (!isset($_GET['action']))
         $_GET['action'] = 'profile';
 
     ?>
@@ -1087,16 +1087,15 @@ function wfd_truck_user_dashboard_fn()
 
         // print_r($_SESSION);
 
-        if ($_GET['act'] == 'logout') {
+        if (isset($_GET['act']) && $_GET['act'] == 'logout') {
             $_SESSION['client_login'] = 'false';
             $_SESSION['client_username'] = '';
             $_SESSION['client_id'] = '';
-
-            echo "<h2>Logedout</h2>";
             ?>
+            <h2><?php _e('Logedout', 'wfd_truck'); ?> </h2>
             <script>
                 setTimeout(function () {
-                    window.location.href = "<?php echo site_url(); ?>/user-dashboard";
+                    window.location.href = "<?php echo site_url(); ?>";
                 }, 1000);
             </script>
             <?php
@@ -1233,6 +1232,10 @@ function wfd_truck_user_dashboard_fn()
                         $tbl_prices = $wpdb->prefix . "wfd_truck_truck_prices";
                         $res_prices = $wpdb->get_results("select * from $tbl_prices where cid=$id", OBJECT);
 
+                        $res_company_list = $wpdb->get_results("SELECT DISTINCT 'company' FROM $tbl_client_info ORDER BY 'company'", OBJECT);
+                        $res_zip_list = $wpdb->get_results("SELECT DISTINCT 'zip' FROM $tbl_client_info ORDER BY 'zip'", OBJECT);
+                        $res_city_list = $wpdb->get_results("SELECT DISTINCT 'city' FROM $tbl_client_info ORDER BY 'city'", OBJECT);
+
 // echo "select * from $tbl_driver_info where cid=$id and type='Driver'";
                         //wp_wfd_truck_truck_truck_info
                         //echo "select * from $tbl_call_num where cid=$id";
@@ -1249,9 +1252,13 @@ function wfd_truck_user_dashboard_fn()
 
                         <br>
                         <ul class="nav nav-tabs" role="tablist">
-                            <li role="presentation"><a href="#client_list" aria-controls="Clients List" role="tab"
-                                                                      data-toggle="tab"><?php _e('Clients List', 'wfd_truck'); ?></a>
-                            </li>
+                            <?php
+                            if (count($res_client_list) == 0 || $res_client_info[0]->type == 0) {
+                                ?>
+                                <li role="presentation"><a href="#client_list" aria-controls="Clients List" role="tab"
+                                                           data-toggle="tab"><?php _e('Clients List', 'wfd_truck'); ?></a>
+                                </li>
+                            <?php } ?>
                             <li role="presentation" class="active"><a href="#core" aria-controls="CoreData" role="tab"
                                                                       data-toggle="tab"><?php _e('Core Data', 'wfd_truck'); ?></a>
                             </li>
@@ -1273,21 +1280,101 @@ function wfd_truck_user_dashboard_fn()
                         </ul>
                         <div class="tab-content">
                             <?php
-                            if(count($res_client_info) == 0 || $res_client_info[0]['type'] == 0 ){
-                            ?>
-                            <div role="tabpanel" class="tab-pane" id="client_list">
-                                <div class="col-sm-3">
-                                    <h2><?php _e('Clients List', 'wfd_truck'); ?></h2>
-                                    <select class="selectpicker form-control">
-                                        <option>Top 20</option>
-                                        <option>International</option>
-                                        <option>Euroupa</option>
-                                        <option>Asien</option>
-                                        <option>Amerikan</option>
-                                    </select>
+                            if (count($res_client_list) == 0 || $res_client_info[0]->type == 0) {
+                                ?>
+                                <div role="tabpanel" class="tab-pane" id="client_list">
+                                    <div class="col-sm-9">
+                                        <h2><?php _e('Clients List', 'wfd_truck'); ?></h2>
+                                        <div style="display: flex;">
+                                            <select class="selectpicker form-control">
+                                                <?php
+                                                foreach ($res_company_list as $company){
+                                                    echo "<option>$company->company</option>";
+                                                 } ?>
+                                            </select>
+                                            <select class="selectpicker form-control">
+                                                <?php
+                                                foreach ($res_zip_list as $zip){
+                                                    echo "<option>$zip->zip</option>";
+                                                } ?>
+                                            </select>
+                                            <select class="selectpicker form-control">
+                                                <?php
+                                                foreach ($res_city_list as $city){
+                                                    echo "<option>$city->city</option>";
+                                                } ?>
+                                            </select>
+                                        </div>
+                                        <table class="table table-striped">
+                                            <thead>
+                                            <tr>
+                                                <th><?php _e('Company', 'wfd_truck'); ?></th>
+                                                <th><?php _e('Street', 'wfd_truck'); ?></th>
+                                                <th><?php _e('Zip', 'wfd_truck'); ?></th>
+                                                <th><?php _e('City', 'wfd_truck'); ?></th>
+                                                <th><?php _e('Phone', 'wfd_truck'); ?></th>
+                                                <th><?php _e('Note', 'wfd_truck'); ?></th>
+                                                <th><?php _e('Action', 'wfd_truck'); ?></th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <?php
+
+                                            foreach ($res_client_list as $client) { ?>
+                                                <tr>
+                                                    <td><?php echo $client->company ?></td>
+                                                    <td><?php echo $client->street ?></td>
+                                                    <td><?php echo $client->zip ?></td>
+                                                    <td><?php echo $client->city ?></td>
+                                                    <td><?php echo $client->phone ?></td>
+                                                    <td><?php echo $client->note ?></td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-link" data-toggle="modal"
+                                                                data-target="#mdvide_<?php echo $client->id ?>"><?php _e('View', 'wfd_truck');?></button>
+                                                        || <button type="button" class="btn btn-link" data-toggle="modal"
+                                                                   data-target="#mdvide_<?php echo $client->id ?>"><?php _e('Edit', 'wfd_truck'); ?></button>
+                                                        || <button type="button" class="btn btn-link" data-toggle="modal"
+                                                                   data-target="#mdvide_<?php echo $client->id ?>"><?php _e('Delete', 'wfd_truck'); ?></button>
+
+
+                                                        <!-- Modal -->
+                                                        <div class="modal fade" id="mdvide_<?php echo $client->id ?>"
+                                                             tabindex="-1"
+                                                             role="dialog" aria-labelledby="myModalLabel">
+                                                            <div class="modal-dialog" role="document">
+                                                                <div class="modal-content">
+                                                                    <div class="modal-header">
+                                                                        <button type="button" class="close"
+                                                                                data-dismiss="modal"
+                                                                                aria-label="Close"><span
+                                                                                    aria-hidden="true">&times;</span>
+                                                                        </button>
+                                                                        <h4 class="modal-title"
+                                                                            id="myModalLabel"><?php _e('Details', 'wfd_truck'); ?></h4>
+                                                                    </div>
+                                                                    <div class="modal-body">
+
+
+                                                                    </div>
+                                                                    <div class="modal-footer">
+                                                                        <button type="button" class="btn btn-default"
+                                                                                data-dismiss="modal"><?php _e('Close', 'wfd_truck'); ?></button>
+                                                                        <button type="button"
+                                                                                class="btn btn-primary"><?php _e('Save changes', 'wfd_truck'); ?></button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+
+                                                    </td>
+                                                </tr>
+                                            <?php } ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
-                            </div>
-                                <?php } ?>
+                            <?php } ?>
                             <div role="tabpanel" class="tab-pane active" id="core">
 
                                 <div class="col-sm-3">
@@ -1376,91 +1463,94 @@ function wfd_truck_user_dashboard_fn()
                                             $id = $_SESSION['client_id'];
                                             $res_client_info_id = $wpdb->get_results("select * from $tbl_client_info where id=$id limit 1", OBJECT);
 
-                                            //print_r($res_client_info_id);
-                                            ?>
+                                            if (count($res_client_info_id) > 0) {
+                                                //print_r($res_client_info_id);
+                                                ?>
 
 
-                                            <div class="well">
+                                                <div class="well">
 
-                                                <h2><?php _e('Edit New Client', 'wfd_truck'); ?></h2>
+                                                    <h2><?php _e('Edit New Client', 'wfd_truck'); ?></h2>
 
-                                                <form method="POST">
-                                                    <div class="form-group">
-                                                        <label><?php _e('Company', 'wfd_truck'); ?></label>
-                                                        <input type="text" name="company" class="form-control"
-                                                               placeholder="Company Name"
-                                                               value="<?php echo $res_client_info_id[0]->company ?>">
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('Email', 'wfd_truck'); ?></label>
-                                                        <?php echo $res_client_info_id[0]->email ?>
+                                                    <form method="POST">
+                                                        <div class="form-group">
+                                                            <label><?php _e('Company', 'wfd_truck'); ?></label>
+                                                            <input type="text" name="company" class="form-control"
+                                                                   placeholder="Company Name"
+                                                                   value="<?php echo $res_client_info_id[0]->company ?>">
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label><?php _e('Email', 'wfd_truck'); ?></label>
+                                                            <?php echo $res_client_info_id[0]->email ?>
 
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('Username', 'wfd_truck'); ?></label>
-                                                        <?php echo $res_client_info_id[0]->username ?>
-                                                    </div>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label><?php _e('Username', 'wfd_truck'); ?></label>
+                                                            <?php echo $res_client_info_id[0]->username ?>
+                                                        </div>
 
-                                                    <div class="form-group">
-                                                        <label><?php _e('Street', 'wfd_truck'); ?></label>
-                                                        <input type="text" name="street" class="form-control"
-                                                               placeholder="street"
-                                                               value="<?php echo $res_client_info_id[0]->street ?>">
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('Zip', 'wfd_truck'); ?></label>
-                                                        <input type="text" name="zip" class="form-control"
-                                                               placeholder="zip"
-                                                               value="<?php echo $res_client_info_id[0]->zip ?>">
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('City', 'wfd_truck'); ?></label>
-                                                        <input type="text" name="city" class="form-control"
-                                                               placeholder="city"
-                                                               value="<?php echo $res_client_info_id[0]->city ?>">
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('Phone', 'wfd_truck'); ?></label>
-                                                        <input type="text" name="phone" class="form-control"
-                                                               placeholder="phone"
-                                                               value="<?php echo $res_client_info_id[0]->phone ?>">
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('Fax', 'wfd_truck'); ?></label>
-                                                        <input type="text" name="fax" class="form-control"
-                                                               placeholder="fax"
-                                                               value="<?php echo $res_client_info_id[0]->fax ?>">
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('Emergency Phone', 'wfd_truck'); ?></label>
-                                                        <input type="text" name="emergency_phone" class="form-control"
-                                                               placeholder="emergency_phone"
-                                                               value="<?php echo $res_client_info_id[0]->emergency_phone ?>">
-                                                        <input type="hidden" name="id"
-                                                               value="<?php echo $res_client_info_id[0]->id ?>">
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('Website', 'wfd_truck'); ?></label>
-                                                        <input type="text" name="website" class="form-control"
-                                                               placeholder="website"
-                                                               value="<?php echo $res_client_info_id[0]->website ?>">
-                                                    </div>
+                                                        <div class="form-group">
+                                                            <label><?php _e('Street', 'wfd_truck'); ?></label>
+                                                            <input type="text" name="street" class="form-control"
+                                                                   placeholder="street"
+                                                                   value="<?php echo $res_client_info_id[0]->street ?>">
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label><?php _e('Zip', 'wfd_truck'); ?></label>
+                                                            <input type="text" name="zip" class="form-control"
+                                                                   placeholder="zip"
+                                                                   value="<?php echo $res_client_info_id[0]->zip ?>">
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label><?php _e('City', 'wfd_truck'); ?></label>
+                                                            <input type="text" name="city" class="form-control"
+                                                                   placeholder="city"
+                                                                   value="<?php echo $res_client_info_id[0]->city ?>">
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label><?php _e('Phone', 'wfd_truck'); ?></label>
+                                                            <input type="text" name="phone" class="form-control"
+                                                                   placeholder="phone"
+                                                                   value="<?php echo $res_client_info_id[0]->phone ?>">
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label><?php _e('Fax', 'wfd_truck'); ?></label>
+                                                            <input type="text" name="fax" class="form-control"
+                                                                   placeholder="fax"
+                                                                   value="<?php echo $res_client_info_id[0]->fax ?>">
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label><?php _e('Emergency Phone', 'wfd_truck'); ?></label>
+                                                            <input type="text" name="emergency_phone"
+                                                                   class="form-control"
+                                                                   placeholder="emergency_phone"
+                                                                   value="<?php echo $res_client_info_id[0]->emergency_phone ?>">
+                                                            <input type="hidden" name="id"
+                                                                   value="<?php echo $res_client_info_id[0]->id ?>">
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label><?php _e('Website', 'wfd_truck'); ?></label>
+                                                            <input type="text" name="website" class="form-control"
+                                                                   placeholder="website"
+                                                                   value="<?php echo $res_client_info_id[0]->website ?>">
+                                                        </div>
 
-                                                    <div class="form-group">
-                                                        <label><?php _e('Note', 'wfd_truck'); ?></label>
-                                                        <textarea name="note" class="form-control"
-                                                                  placeholder="Note here"><?php echo $res_client_info_id[0]->note ?></textarea>
+                                                        <div class="form-group">
+                                                            <label><?php _e('Note', 'wfd_truck'); ?></label>
+                                                            <textarea name="note" class="form-control"
+                                                                      placeholder="Note here"><?php echo $res_client_info_id[0]->note ?></textarea>
 
-                                                    </div>
+                                                        </div>
 
-                                                    <div class="form-group">
-                                                        <input type="submit" class="btn btn-default"
-                                                               name="edit_new_clinet_fn"
-                                                               value="<?php _e('Edit Client', 'wfd_truck'); ?>"/>
-                                                    </div>
-                                                </form>
+                                                        <div class="form-group">
+                                                            <input type="submit" class="btn btn-default"
+                                                                   name="edit_new_clinet_fn"
+                                                                   value="<?php _e('Edit Client', 'wfd_truck'); ?>"/>
+                                                        </div>
+                                                    </form>
 
-                                            </div>
+                                                </div>
+                                            <?php } ?>
 
                                             <div class="clearfix"></div>
                                         </div>

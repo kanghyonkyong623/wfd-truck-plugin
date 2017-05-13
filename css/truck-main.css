@@ -10,3 +10,40 @@
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
 }
+h3 { font-size: 18px !important;}
+.wrap {    max-width: 100%;}    
+.sidebar-nav .navbar .navbar-collapse {
+padding: 0;
+max-height: none;
+}
+.sidebar-nav .navbar ul {
+float: none;
+display: block;
+}
+.sidebar-nav .navbar li {
+float: none;
+display: block;
+}
+.sidebar-nav .navbar li a {
+padding-top: 12px;
+padding-bottom: 12px;
+}
+div#logo {
+display: none;
+}
+div#footer {
+display: none;
+}
+.toggles {
+display: none;
+}
+#step3button {
+    margin: auto;
+    padding-top: 12px;
+}
+.dropdown-toggle:after {
+    display:none;
+}
+.btn-link, .btn-link:hover, .btn-link:focus, .btn-link:active {
+    padding: 0px 0px;
+}
