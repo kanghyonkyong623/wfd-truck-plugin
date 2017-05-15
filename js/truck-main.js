@@ -199,6 +199,29 @@ $(document).ready(function ($) {
         }
     });
 
+    $('.btn-client-view').click(function (e) {
+        setValuesToDialog(this);
+        $('#add_clinet_core').prop('disabled', true);
+        $('#add_client_info').modal('show');
+    });
+
+    $('.btn-client-edit').click(function (e) {
+        setValuesToDialog(this);
+        $('#add_client_info').modal('show');
+    });
+
+    function setValuesToDialog(buttonElem){
+        var clientId = $(buttonElem).data('clientId');
+        var trElem = $('tr[data-user-id="' + clientId + '"]', $('#clients-list'));
+        var tdArray = $('td', trElem);
+        $('#new-company').val(tdArray[0].textContent);
+        $('#new-street').val(tdArray[1].textContent);
+        $('#new-zip').val(tdArray[2].textContent);
+        $('#new-city').val(tdArray[3].textContent);
+        $('#new-phone').val(tdArray[4].textContent);
+        $('#new-note').val(tdArray[5].textContent);
+    }
+
     $('.btn-driver-save').click(function (e) {
         var modalDlg = this.closest('.modal');
         var firstName = $('input[name="fname"]', modalDlg);

@@ -24,7 +24,8 @@ function plugin_init()
 }
 
 //add_action( 'plugins_loaded', 'my_enqueue' );
-function my_enqueue() {
+function my_enqueue()
+{
 
     wp_enqueue_style('bootstrap-style', 'http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css', null);
     wp_enqueue_style('bootstrap-theme', 'http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css', null);
@@ -79,7 +80,7 @@ function wfd_add_client()
         $sql_add_client = "INSERT INTO $tbl_clients (`username`, `email`, `company`, `password`) values ('$new_user_name', '$new_email_address', '$new_company_name', '$new_password')";
         if ($wpdb->query($sql_add_client) != false) {
             $result_array['result'] = true;
-            $result_array['message'] =  __('Congratulate! Your account successfully created!', 'wdf_truck');
+            $result_array['message'] = __('Congratulate! Your account successfully created!', 'wdf_truck');
             $result_array['clientId'] = $wpdb->insert_id;
         } else {
             $result_array['result'] = false;
@@ -89,6 +90,7 @@ function wfd_add_client()
     echo json_encode($result_array);
     wp_die();
 }
+
 function wfd_update_client()
 {
     global $wpdb;
@@ -1263,7 +1265,7 @@ function wfd_admin_view()
                     <?php
 
                     foreach ($res_client_list as $client) { ?>
-                        <tr data-userid="<?php echo $client->id ?>">
+                        <tr data-user-id="<?php echo $client->id ?>">
                             <td><?php echo $client->company ?></td>
                             <td><?php echo $client->street ?></td>
                             <td><?php echo $client->zip ?></td>
@@ -1271,45 +1273,14 @@ function wfd_admin_view()
                             <td><?php echo $client->phone ?></td>
                             <td><?php echo $client->note ?></td>
                             <td>
-                                <button type="button" class="btn btn-link" data-toggle="modal"
-                                        data-target="#mdvide_<?php echo $client->id ?>"><?php _e('View', 'wfd_truck'); ?></button>
+                                <button type="button" class="btn btn-link btn-client-view"
+                                        data-client-id="<?php echo $client->id ?>"><?php _e('View', 'wfd_truck'); ?></button>
                                 ||
-                                <button type="button" class="btn btn-link" data-toggle="modal"
-                                        data-target="#mdvide_<?php echo $client->id ?>"><?php _e('Edit', 'wfd_truck'); ?></button>
+                                <button type="button" class="btn btn-link btn-client-edit"
+                                        data-client-id="<?php echo $client->id ?>"><?php _e('Edit', 'wfd_truck'); ?></button>
                                 ||
-                                <button type="button" class="btn btn-link" data-toggle="modal"
-                                        data-target="#mdvide_<?php echo $client->id ?>"><?php _e('Delete', 'wfd_truck'); ?></button>
-
-
-                                <!-- Modal -->
-                                <div class="modal fade" id="mdvide_<?php echo $client->id ?>"
-                                     tabindex="-1"
-                                     role="dialog" aria-labelledby="myModalLabel">
-                                    <div class="modal-dialog" role="document">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <button type="button" class="close"
-                                                        data-dismiss="modal"
-                                                        aria-label="Close"><span
-                                                            aria-hidden="true">&times;</span>
-                                                </button>
-                                                <h4 class="modal-title"
-                                                    id="myModalLabel"><?php _e('Details', 'wfd_truck'); ?></h4>
-                                            </div>
-                                            <div class="modal-body">
-
-
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-default"
-                                                        data-dismiss="modal"><?php _e('Close', 'wfd_truck'); ?></button>
-                                                <button type="button"
-                                                        class="btn btn-primary"><?php _e('Save changes', 'wfd_truck'); ?></button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
+                                <button type="button" class="btn btn-link btn-client-delete"
+                                        data-client-id="<?php echo $client->id ?>"><?php _e('Delete', 'wfd_truck'); ?></button>
 
                             </td>
                         </tr>
@@ -1409,6 +1380,14 @@ function wfd_admin_view()
                                 <div class="container-fluid">
                                     <div class="row form-group">
                                         <div class="col-sm-4">
+                                            <label><?php _e('Company', 'wfd_truck') ?></label>
+                                        </div>
+                                        <div class="col-sm-4"><input class="form-control"
+                                                                     id="new_company">
+                                        </div>
+                                    </div>
+                                    <div class="row form-group">
+                                        <div class="col-sm-4">
                                             <label><?php _e('Street', 'wfd_truck') ?></label>
                                         </div>
                                         <div class="col-sm-4"><input class="form-control"
@@ -1450,17 +1429,18 @@ function wfd_admin_view()
                                 </div>
                             </div>
 
-                            </div>
-                            <div class="modal-footer form-group">
-                                <button type="button" class="btn btn-primary"
-                                        id="add_clinet_core"><span
-                                            class="glyphicon glyphicon-save-file"></span> <?php _e('Save', 'wfd_truck'); ?>
-                                </button>
-                            </div>
+                        <div class="modal-footer form-group">
+                            <button type="button" class="btn btn-primary"
+                                    id="add_clinet_core"><span
+                                        class="glyphicon glyphicon-save-file"></span> <?php _e('Save', 'wfd_truck'); ?>
+                            </button>
                         </div>
-                    </form>
-
+                        </div>
                 </div>
+                </form>
+
+            </div>
+        </div>
     <?php }
 
 }
@@ -1499,13 +1479,15 @@ function wfd_truck_user_dashboard_fn()
                 <div class="col-sm-4 col-sm-offset-4">
                     <form method="POST">
                         <label><b><?php _e('Username', 'wfd_truck'); ?></b></label>
-                        <input type="text" placeholder="Enter Username" name="username" required class="form-control">
+                        <input type="text" placeholder="Enter Username" name="username" required
+                               class="form-control">
 
                         <label><b><?php _e('Password', 'wfd_truck'); ?></b></label>
                         <input type="password" placeholder="Enter Password" name="password" required
                                class="form-control">
 
-                        <input type="submit" class="btn btn-lg btn-default" value="<?php _e('Login', 'wfd_truck'); ?>"
+                        <input type="submit" class="btn btn-lg btn-default"
+                               value="<?php _e('Login', 'wfd_truck'); ?>"
                                name="client_login">
                     </form>
                 </div>
@@ -1624,7 +1606,7 @@ function wfd_truck_user_dashboard_fn()
                         $res_prices = $wpdb->get_results("select * from $tbl_prices where cid=$id", OBJECT);
 
 
-// echo "select * from $tbl_driver_info where cid=$id and type='Driver'";
+                        // echo "select * from $tbl_driver_info where cid=$id and type='Driver'";
                         //wp_wfd_truck_truck_truck_info
                         //echo "select * from $tbl_call_num where cid=$id";
 
@@ -3824,153 +3806,212 @@ function wfd_truck_user_dashboard_fn()
                                                 <button type="button" class="btn btn-link" data-toggle="modal"
                                                         data-target="#md_tpnew_<?php echo $ti->id ?>"><?php _e('', 'wfd_truck'); ?>
                                                     <?php _e('Del', 'wfd_truck'); ?>
-                                                </button> ||
+                                                </button>
+                                                ||
                                                 <button type="button" class="btn btn-link" data-toggle="modal"
                                                         data-target="#md_tpcopy_<?php echo $ti->id ?>"><?php _e('', 'wfd_truck'); ?>
                                                     <?php _e('Copy', 'wfd_truck'); ?>
                                                 </button>
 
-                                            <!-- Modal TPView-->
-                                            <div class="modal fade" id="md_tpview_<?php echo $ti->id ?>" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-                                                <div style="width: 60%" class="modal-dialog" role="document">
-                                                    <div class="modal-content">
-                                                        <div style="background-color: #5cb85c; color: white !important;" class="modal-header">
-                                                            <button type="button" class="close" data-dismiss="modal"
-                                                                    aria-label="Close"><span
-                                                                        aria-hidden="true">&times;</span></button>
-                                                            <h4 class="modal-title" id="myModalLabel">
-                                                                <?php _e('Truck:', 'wfd_truck'); ?> <?php echo $ti->id ?> - <?php echo $ti->brand ?></h4>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <div class="row">
-                                                                <div class="col-sm-8">
-                                                                    <h2><?php _e('Truck Data', 'wfd_truck'); ?></h2>
-                                                                    <form class="form-horizontal" action="#">
-                                                                      <div class="col-sm-6">
-                                                                        <div class="form-group">
-                                                                            <label class="control-label col-sm-5"><?php _e('ID', 'wfd_truck'); ?>:</label>
-                                                                            <div class="col-sm-7">
-                                                                                <input type="text" class="form-control" name="id" value=<?php echo $ti->id ?>>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="form-group">
-                                                                            <label class="control-label col-sm-5"><?php _e('Brand', 'wfd_truck'); ?>:</label>
-                                                                            <div class="col-sm-7">
-                                                                                <input type="text" class="form-control" name="brand" value=<?php echo $ti->brand ?>>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="form-group">
-                                                                            <label class="control-label col-sm-5"><?php _e('weight', 'wfd_truck'); ?>:</label>
-                                                                            <div class="col-sm-7">
-                                                                                <input type="text" class="form-control" name="weight" value=<?php echo $ti->weight ?>>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="form-group">
-                                                                            <label class="control-label col-sm-5"><?php _e('max load', 'wfd_truck'); ?>:</label>
-                                                                            <div class="col-sm-7">
-                                                                                <input type="text" class="form-control" name="max_load" value=<?php echo $ti->max_load ?>>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="form-group">
-                                                                            <label class="control-label col-sm-5"><?php _e('load height', 'wfd_truck'); ?>:</label>
-                                                                            <div class="col-sm-7">
-                                                                                <input type="text" class="form-control" name="load_height" value=<?php echo $ti->load_height ?>>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="form-group">
-                                                                            <label class="control-label col-sm-5"><?php _e('plateau height', 'wfd_truck'); ?>:</label>
-                                                                            <div class="col-sm-7">
-                                                                                <input type="text" class="form-control" name="pheight" value=<?php echo $ti->pheight ?>>
-                                                                            </div>
-                                                                        </div>
-                                                                      </div>
-                                                                      <div class="col-sm-6">
-                                                                         <div class="form-group">
-                                                                            <label class="control-label col-sm-5"><?php _e('spectacle force', 'wfd_truck'); ?>:</label>
-                                                                            <div class="col-sm-7">
-                                                                               <input type="text" class="form-control" name="spec_force" value=<?php echo $ti->spec_force ?>>
-                                                                            </div>
-                                                                         </div>
-                                                                         <div class="form-group">
-                                                                            <label class="control-label col-sm-5"><?php _e('cable winch force', 'wfd_truck'); ?>:</label>
-                                                                            <div class="col-sm-7">
-                                                                               <input type="text" class="form-control" name="cable_force" value=<?php echo $ti->cable_force ?>>
-                                                                            </div>
-                                                                         </div>
-                                                                         <div class="form-group">
-                                                                            <label class="control-label col-sm-5"><?php _e('crane', 'wfd_truck'); ?>:</label>
-                                                                            <div class="col-sm-7">
-                                                                               <input type="text" class="form-control" name="crane" value=<?php echo $ti->crane ?>>
-                                                                            </div>
-                                                                         </div>
-                                                                         <div class="form-group">
-                                                                            <label class="control-label col-sm-5"><?php _e('plateau length', 'wfd_truck'); ?>:</label>
-                                                                            <div class="col-sm-7">
-                                                                              <input type="text" class="form-control" name="plength" value=<?php echo $ti->plength ?>>
-                                                                            </div>
-                                                                         </div>
-                                                                         <div class="form-group">
-                                                                            <label class="control-label col-sm-5"><?php _e('motorcycle', 'wfd_truck'); ?>:</label>
-                                                                            <div class="col-sm-7">
-                                                                                <label class="switch">
-                                                                                    <input type="checkbox" checked>
-                                                                                    <div class="slider round"></div>
-                                                                                </label>
-                                                                            </div>
-                                                                         </div>
-                                                                         <div class="form-group">
-                                                                            <label class="control-label col-sm-5"><?php _e('seats', 'wfd_truck'); ?>:</label>
-                                                                            <div class="col-sm-7">
-                                                                               <input type="text" class="form-control" name="seats" value=<?php echo $ti->seats ?>>
-                                                                            </div>
-                                                                         </div>
-                                                                         <div class="form-group">
-                                                                            <label class="control-label col-sm-5"><?php _e('under lift', 'wfd_truck'); ?>:</label>
-                                                                            <div class="col-sm-7">
-                                                                               <input type="text" class="form-control" name="under_lift" value=<?php echo $ti->under_lift ?>>
-                                                                            </div>
-                                                                         </div>
-                                                                      </div>
-                                                                    </form>
-                                                                </div>
-                                                                <div class="col-sm-2">
-                                                                    <form>
-                                                                        <div class="form-group">
-                                                                            <label><?php _e('Type', 'wfd_truck'); ?></label>
-                                                                            <select class="form-control" id="">
-                                                                                <option><?php echo $ti->type ?></option>
-                                                                                <option><?php _e('Rig', 'wfd_truck'); ?></option>
-                                                                                <option><?php _e('Spectacle truck', 'wfd_truck'); ?></option>
-                                                                                <option><?php _e('Crane', 'wfd_truck'); ?></option>
-                                                                                <option><?php _e('truck salvage', 'wfd_truck'); ?></option>
-                                                                            </select>
-                                                                        </div>
-                                                                    </form>
-                                                                </div>
-                                                                <div class="col-sm-2">
-                                                                    <img src="wp-admin/images/4.jpg" class="img-thumbnail" alt="Cinque Terre" width="200" height="150">
-                                                                    <p class="col-sm-12"><?php _e('truck photo', 'wfd_truck'); ?></p>
-
-                                                                    <form>
-                                                                       <label class="switch_red">
-                                                                          <input type="checkbox" checked>
-                                                                          <div class="slider round"></div>
-                                                                       </label>
-                                                                       <label class="switch_label"><?php _e('out of order', 'wfd_truck'); ?></label>
-                                                                    </form>
-                                                                </div>
+                                                <!-- Modal TPView-->
+                                                <div class="modal fade" id="md_tpview_<?php echo $ti->id ?>"
+                                                     tabindex="-1"
+                                                     role="dialog" aria-labelledby="myModalLabel">
+                                                    <div style="width: 60%" class="modal-dialog" role="document">
+                                                        <div class="modal-content">
+                                                            <div style="background-color: #5cb85c; color: white !important;"
+                                                                 class="modal-header">
+                                                                <button type="button" class="close" data-dismiss="modal"
+                                                                        aria-label="Close"><span
+                                                                            aria-hidden="true">&times;</span></button>
+                                                                <h4 class="modal-title" id="myModalLabel">
+                                                                    <?php _e('Truck:', 'wfd_truck'); ?> <?php echo $ti->id ?>
+                                                                    - <?php echo $ti->brand ?></h4>
                                                             </div>
+                                                            <div class="modal-body">
+                                                                <div class="row">
+                                                                    <div class="col-sm-8">
+                                                                        <h2><?php _e('Truck Data', 'wfd_truck'); ?></h2>
+                                                                        <form class="form-horizontal" action="#">
+                                                                            <div class="col-sm-6">
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-sm-5"><?php _e('ID', 'wfd_truck'); ?>
+                                                                                        :</label>
+                                                                                    <div class="col-sm-7">
+                                                                                        <input type="text"
+                                                                                               class="form-control"
+                                                                                               name="id"
+                                                                                               value=<?php echo $ti->id ?>>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-sm-5"><?php _e('Brand', 'wfd_truck'); ?>
+                                                                                        :</label>
+                                                                                    <div class="col-sm-7">
+                                                                                        <input type="text"
+                                                                                               class="form-control"
+                                                                                               name="brand"
+                                                                                               value=<?php echo $ti->brand ?>>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-sm-5"><?php _e('weight', 'wfd_truck'); ?>
+                                                                                        :</label>
+                                                                                    <div class="col-sm-7">
+                                                                                        <input type="text"
+                                                                                               class="form-control"
+                                                                                               name="weight"
+                                                                                               value=<?php echo $ti->weight ?>>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-sm-5"><?php _e('max load', 'wfd_truck'); ?>
+                                                                                        :</label>
+                                                                                    <div class="col-sm-7">
+                                                                                        <input type="text"
+                                                                                               class="form-control"
+                                                                                               name="max_load"
+                                                                                               value=<?php echo $ti->max_load ?>>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-sm-5"><?php _e('load height', 'wfd_truck'); ?>
+                                                                                        :</label>
+                                                                                    <div class="col-sm-7">
+                                                                                        <input type="text"
+                                                                                               class="form-control"
+                                                                                               name="load_height"
+                                                                                               value=<?php echo $ti->load_height ?>>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-sm-5"><?php _e('plateau height', 'wfd_truck'); ?>
+                                                                                        :</label>
+                                                                                    <div class="col-sm-7">
+                                                                                        <input type="text"
+                                                                                               class="form-control"
+                                                                                               name="pheight"
+                                                                                               value=<?php echo $ti->pheight ?>>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="col-sm-6">
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-sm-5"><?php _e('spectacle force', 'wfd_truck'); ?>
+                                                                                        :</label>
+                                                                                    <div class="col-sm-7">
+                                                                                        <input type="text"
+                                                                                               class="form-control"
+                                                                                               name="spec_force"
+                                                                                               value=<?php echo $ti->spec_force ?>>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-sm-5"><?php _e('cable winch force', 'wfd_truck'); ?>
+                                                                                        :</label>
+                                                                                    <div class="col-sm-7">
+                                                                                        <input type="text"
+                                                                                               class="form-control"
+                                                                                               name="cable_force"
+                                                                                               value=<?php echo $ti->cable_force ?>>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-sm-5"><?php _e('crane', 'wfd_truck'); ?>
+                                                                                        :</label>
+                                                                                    <div class="col-sm-7">
+                                                                                        <input type="text"
+                                                                                               class="form-control"
+                                                                                               name="crane"
+                                                                                               value=<?php echo $ti->crane ?>>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-sm-5"><?php _e('plateau length', 'wfd_truck'); ?>
+                                                                                        :</label>
+                                                                                    <div class="col-sm-7">
+                                                                                        <input type="text"
+                                                                                               class="form-control"
+                                                                                               name="plength"
+                                                                                               value=<?php echo $ti->plength ?>>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-sm-5"><?php _e('motorcycle', 'wfd_truck'); ?>
+                                                                                        :</label>
+                                                                                    <div class="col-sm-7">
+                                                                                        <label class="switch">
+                                                                                            <input type="checkbox"
+                                                                                                   checked>
+                                                                                            <div class="slider round"></div>
+                                                                                        </label>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-sm-5"><?php _e('seats', 'wfd_truck'); ?>
+                                                                                        :</label>
+                                                                                    <div class="col-sm-7">
+                                                                                        <input type="text"
+                                                                                               class="form-control"
+                                                                                               name="seats"
+                                                                                               value=<?php echo $ti->seats ?>>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-sm-5"><?php _e('under lift', 'wfd_truck'); ?>
+                                                                                        :</label>
+                                                                                    <div class="col-sm-7">
+                                                                                        <input type="text"
+                                                                                               class="form-control"
+                                                                                               name="under_lift"
+                                                                                               value=<?php echo $ti->under_lift ?>>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </form>
+                                                                    </div>
+                                                                    <div class="col-sm-2">
+                                                                        <form>
+                                                                            <div class="form-group">
+                                                                                <label><?php _e('Type', 'wfd_truck'); ?></label>
+                                                                                <select class="form-control" id="">
+                                                                                    <option><?php echo $ti->type ?></option>
+                                                                                    <option><?php _e('Rig', 'wfd_truck'); ?></option>
+                                                                                    <option><?php _e('Spectacle truck', 'wfd_truck'); ?></option>
+                                                                                    <option><?php _e('Crane', 'wfd_truck'); ?></option>
+                                                                                    <option><?php _e('truck salvage', 'wfd_truck'); ?></option>
+                                                                                </select>
+                                                                            </div>
+                                                                        </form>
+                                                                    </div>
+                                                                    <div class="col-sm-2">
+                                                                        <img src="wp-admin/images/4.jpg"
+                                                                             class="img-thumbnail" alt="Cinque Terre"
+                                                                             width="200" height="150">
+                                                                        <p class="col-sm-12"><?php _e('truck photo', 'wfd_truck'); ?></p>
 
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="submit" class="btn btn-primary">
-                                                                <span class="glyphicon glyphicon-floppy-disk"></span>  <?php _e('Save', 'wfd_truck'); ?></button>
-                                                            <button type="button" class="btn btn-primary">
-                                                                <span class="glyphicon glyphicon-pencil"></span>  <?php _e('Edit', 'wfd_truck'); ?></button>
+                                                                        <form>
+                                                                            <label class="switch_red">
+                                                                                <input type="checkbox" checked>
+                                                                                <div class="slider round"></div>
+                                                                            </label>
+                                                                            <label class="switch_label"><?php _e('out of order', 'wfd_truck'); ?></label>
+                                                                        </form>
+                                                                    </div>
+                                                                </div>
+
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="submit" class="btn btn-primary">
+                                                                    <span class="glyphicon glyphicon-floppy-disk"></span> <?php _e('Save', 'wfd_truck'); ?>
+                                                                </button>
+                                                                <button type="button" class="btn btn-primary">
+                                                                    <span class="glyphicon glyphicon-pencil"></span> <?php _e('Edit', 'wfd_truck'); ?>
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
                                         </tr>
                                     <?php } ?>
                                     </tbody>
@@ -4025,7 +4066,7 @@ function wfd_truck_user_dashboard_fn()
                                         </form>
                                     </div>
                                 </div>
-
+                            </div>
                             <div role="tabpanel" class="tab-pane" id="callNum">
                                 <h2><?php _e('Call Numbers', 'wfd_truck'); ?></h2>
                                 <table class="table table-striped dataTable">
