@@ -51,7 +51,7 @@ function my_enqueue()
     wp_localize_script('ajax-script', 'ajax_object',
         array('ajax_url' => admin_url('admin-ajax.php'), 'fillFormMessage' => __('Please fill all of the fields!', 'wfd_truck'),
             'alertTitle' => __('Alert', 'wfd_truck'), 'okText' => __('OK', 'wfd_truck'),
-            'successTitle' => __('Succeed', 'wdf_truck')));
+            'successTitle' => __('Succeed', 'wfd_truck'), 'deleteConformMessage' => __('Do you confirm to delete?', 'wfd_truck')));
 }
 
 add_action('wp_ajax_wfd_add_client', 'wfd_add_client');
@@ -60,6 +60,8 @@ add_action('wp_ajax_wfd_update_driver', 'wfd_update_driver');
 add_action('wp_ajax_nopriv_wfd_update_driver', 'wfd_update_driver');
 add_action('wp_ajax_wfd_update_client', 'wfd_update_client');
 add_action('wp_ajax_nopriv_wfd_update_client', 'wfd_update_client');
+add_action('wp_ajax_wfd_delete_client', 'wfd_delete_client');
+add_action('wp_ajax_nopriv_wfd_delete_client', 'wfd_delete_client');
 
 function wfd_add_client()
 {
@@ -89,6 +91,24 @@ function wfd_add_client()
     }
     echo json_encode($result_array);
     wp_die();
+}
+function wfd_delete_client(){
+    global $wpdb;
+    $clientId = $_POST['clientId'];
+
+    $tbl_clients = $wpdb->prefix . "wfd_truck_client_info";
+    $sql_delete_client = "DELETE FROM $tbl_clients WHERE id='$clientId'";
+    if ($wpdb->query($sql_delete_client) != false) {
+        $result_array['result'] = true;
+        $result_array['message'] = __('Client Data successfully deleted!', 'wfd_truck');
+    } else {
+        $result_array['result'] = false;
+        $result_array['errorMessage'] = $wpdb->last_error;
+    }
+
+    echo json_encode($result_array);
+    wp_die();
+
 }
 
 function wfd_update_client()
@@ -1219,30 +1239,36 @@ function wfd_admin_view()
                 <div class="row" style="margin-left: 0px;">
                     <div class="col-sm-3" style="padding-left: 0px;"><select
                                 class="selectpicker form-control" id="filter-company">
-                            <option value="" selected disabled
+                            <option value="ALL" selected
                                     hidden><?php _e('filter company', 'wfd_truck') ?></option>
                             <?php
                             foreach ($res_company_list as $company) {
-                                echo "<option>" . $company->company . "</option>";
+                                if($company->company != null && $company->company != ""){
+                                    echo "<option>" . $company->company . "</option>";
+                                }
                             } ?>
                         </select></div>
 
                     <div class="col-sm-2"><select class="selectpicker form-control"
                                                   id="filter-zip">
-                            <option value="" selected disabled
+                            <option value="ALL" selected
                                     hidden><?php _e('filter ZIP', 'wfd_truck') ?></option>
                             <?php
                             foreach ($res_zip_list as $zip) {
-                                echo "<option>$zip->zip</option>";
+                                if($zip->zip != null && $zip->zip != ""){
+                                    echo "<option>$zip->zip</option>";
+                                }
                             } ?>
                         </select></div>
                     <div class="col-sm-3"><select class="selectpicker form-control"
                                                   id="filter-city">
-                            <option value="" selected disabled
+                            <option value="ALL" selected
                                     hidden><?php _e('filter city', 'wfd_truck') ?></option>
                             <?php
                             foreach ($res_city_list as $city) {
-                                echo "<option>$city->city</option>";
+                                if($city->city != null && $city->city != ""){
+                                    echo "<option>$city->city</option>";
+                                }
                             } ?>
                         </select></div>
                 </div>
@@ -4018,7 +4044,7 @@ function wfd_truck_user_dashboard_fn()
                                 </table>
                                 <button class="btn btn-primary" type="button" data-toggle="collapse"
                                         data-target="#addtpool" aria-expanded="false" aria-controls="addtpool">
-                                    </span><span
+                                    <span
                                             class="glyphicon glyphicon-plus"></span><?php _e('  Add Truck', 'wfd_truck'); ?>
                                 </button>
 

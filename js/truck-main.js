@@ -14,7 +14,7 @@ $(document).ready(function ($) {
         }
     }
 
-    $('#new_email_address').focusout( function(e) {
+    $('#new_email_address').focusout(function (e) {
         var emailElem = $('#new_email_address');
         var sEmail = emailElem.val();
         var groupElem = emailElem.closest('.form-group');
@@ -56,7 +56,7 @@ $(document).ready(function ($) {
         var new_user_name = $('#new_user_name').val();
         var new_email_address = $('#new_email_address').val();
         var new_password = $('#new_password').val();
-        if($.trim(new_company_name).length == 0 || $.trim(new_user_name).length == 0 || $.trim(new_email_address).length == 0 || $.trim(new_password).length == 0){
+        if ($.trim(new_company_name).length == 0 || $.trim(new_user_name).length == 0 || $.trim(new_email_address).length == 0 || $.trim(new_password).length == 0) {
             var prom = ezBSAlert({
                 messageText: ajax_object.fillFormMessage,
                 alertType: "danger",
@@ -66,7 +66,7 @@ $(document).ready(function ($) {
                 // $("body").append('<div>Callback from alert</div>');
             });
         }
-        else{
+        else {
             var data = {
                 request: 'add_new_client',
                 action: 'wfd_add_client',
@@ -79,7 +79,7 @@ $(document).ready(function ($) {
                 url: ajax_object.ajax_url,
                 type: 'POST',
                 data: data,
-                success: function(response){
+                success: function (response) {
                     if (response.result != true) {
                         ezBSAlert({
                             messageText: response.errorMessage,
@@ -97,7 +97,7 @@ $(document).ready(function ($) {
                             okButtonText: ajax_object.okText
                         }).done(function (e) {
                             $('#add_client').modal('hide');
-                            var newRow = $('<tr  data-userid="'+ response.clientId + '">');
+                            var newRow = $('<tr  data-userid="' + response.clientId + '">');
                             var cols = "";
 
                             cols += '<td>' + new_company_name + '</td>';
@@ -125,7 +125,8 @@ $(document).ready(function ($) {
                         // $("body").append('<div>Callback from alert</div>');
                     });
                 },
-                dataType:'json'});
+                dataType: 'json'
+            });
 
         }
     });
@@ -136,8 +137,8 @@ $(document).ready(function ($) {
         var new_city = $('#new_city').val();
         var new_phone = $('#new_phone').val();
         var new_note = $('#new_note').val();
-        if($.trim(new_street).length == 0 || $.trim(new_zip).length == 0 || $.trim(new_city).length == 0 || $.trim(new_phone).length == 0
-            || $.trim(new_note).length == 0 ) {
+        if ($.trim(new_street).length == 0 || $.trim(new_zip).length == 0 || $.trim(new_city).length == 0 || $.trim(new_phone).length == 0
+            || $.trim(new_note).length == 0) {
             ezBSAlert({
                 messageText: ajax_object.fillFormMessage,
                 alertType: "danger",
@@ -146,7 +147,7 @@ $(document).ready(function ($) {
             }).done(function (e) {
                 // $("body").append('<div>Callback from alert</div>');
             });
-        }else{
+        } else {
             var clientId = $('#add_client_info').data('clientId');
             var data = {
                 action: 'wfd_update_client',
@@ -160,8 +161,8 @@ $(document).ready(function ($) {
             $.post(
                 ajax_object.ajax_url,
                 data,
-                function(response){
-                    if(response.result == true) {
+                function (response) {
+                    if (response.result == true) {
                         ezBSAlert({
                             messageText: response.message,
                             alertType: "success",
@@ -169,7 +170,7 @@ $(document).ready(function ($) {
                             okButtonText: ajax_object.okText
                         }).done(function (e) {
                             $('#add_client_info').modal('hide');
-                            var updateTarget = $('tr[data-userid="' + clientId + '"]');
+                            var updateTarget = $('tr[data-user-id="' + clientId + '"]');
                             var td = $('td', updateTarget);
                             td[1].textContent = new_street;
                             td[2].textContent = new_zip;
@@ -179,7 +180,7 @@ $(document).ready(function ($) {
                             // $("body").append('<div>Callback from alert</div>');
                         });
                     }
-                    else{
+                    else {
                         ezBSAlert({
                             messageText: response.errorMessage,
                             alertType: "danger",
@@ -192,7 +193,7 @@ $(document).ready(function ($) {
                 },
                 'json'
             )
-                .fail(function(response) {
+                .fail(function (response) {
                     alert('Error: ' + response.responseText);
                 });
 
@@ -207,19 +208,66 @@ $(document).ready(function ($) {
 
     $('.btn-client-edit').click(function (e) {
         setValuesToDialog(this);
+        $('#add_clinet_core').prop('disabled', false);
         $('#add_client_info').modal('show');
     });
 
-    function setValuesToDialog(buttonElem){
+    $('.btn-client-delete').click(function (e) {
+        var clientId = $(this).data('clientId');
+        ezBSAlert({
+            type: "confirm",
+            messageText: ajax_object.deleteConformMessage,
+            alertType: "info"
+        }).done(function (e) {
+            if (e == true) {
+                $.post(
+                    ajax_object.ajax_url,
+                    {
+                        action: 'wfd_delete_client',
+                        clientId: clientId
+                    },
+                    function (response) {
+                        if (response.result == true) {
+                            ezBSAlert({
+                                messageText: response.message,
+                                alertType: "success",
+                                headerText: ajax_object.successTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                $('tr[data-user-id="' + clientId + '"]').remove();
+                            });
+                        }
+                        else {
+                            ezBSAlert({
+                                messageText: response.errorMessage,
+                                alertType: "danger",
+                                headerText: ajax_object.alertTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        }
+                    },
+                    'json'
+                )
+                    .fail(function (response) {
+                        alert('Error: ' + response.responseText);
+                    });
+            }
+        });
+    });
+
+    function setValuesToDialog(buttonElem) {
         var clientId = $(buttonElem).data('clientId');
         var trElem = $('tr[data-user-id="' + clientId + '"]', $('#clients-list'));
         var tdArray = $('td', trElem);
-        $('#new-company').val(tdArray[0].textContent);
-        $('#new-street').val(tdArray[1].textContent);
-        $('#new-zip').val(tdArray[2].textContent);
-        $('#new-city').val(tdArray[3].textContent);
-        $('#new-phone').val(tdArray[4].textContent);
-        $('#new-note').val(tdArray[5].textContent);
+        $('#new_company').val(tdArray[0].textContent);
+        $('#new_street').val(tdArray[1].textContent);
+        $('#new_zip').val(tdArray[2].textContent);
+        $('#new_city').val(tdArray[3].textContent);
+        $('#new_phone').val(tdArray[4].textContent);
+        $('#new_note').val(tdArray[5].textContent);
+        $('#add_client_info').data('clientId', clientId);
     }
 
     $('.btn-driver-save').click(function (e) {
@@ -231,8 +279,8 @@ $(document).ready(function ($) {
         var phone = $('input[name="phone"]', modalDlg);
         var note = $('input[name="note"]', modalDlg);
 
-        if($.trim(firstName.val()).length == 0 || $.trim(lastName.val()).length == 0 || $.trim(street.val()).length == 0 || $.trim(city.val()).length == 0
-            || $.trim(phone.val()).length == 0 || $.trim(note.val()).length == 0){
+        if ($.trim(firstName.val()).length == 0 || $.trim(lastName.val()).length == 0 || $.trim(street.val()).length == 0 || $.trim(city.val()).length == 0
+            || $.trim(phone.val()).length == 0 || $.trim(note.val()).length == 0) {
             ezBSAlert({
                 messageText: ajax_object.fillFormMessage,
                 alertType: "danger",
@@ -242,7 +290,7 @@ $(document).ready(function ($) {
                 // $("body").append('<div>Callback from alert</div>');
             });
         }
-        else{
+        else {
             var driverId = $(modalDlg).data('driverId');
             var data = {
                 action: 'wfd_update_driver',
@@ -257,8 +305,8 @@ $(document).ready(function ($) {
             $.post(
                 ajax_object.ajax_url,
                 data,
-                function(response){
-                    if(response.result == true) {
+                function (response) {
+                    if (response.result == true) {
                         ezBSAlert({
                             messageText: response.message,
                             alertType: "success",
@@ -277,7 +325,7 @@ $(document).ready(function ($) {
                             // $("body").append('<div>Callback from alert</div>');
                         });
                     }
-                    else{
+                    else {
                         ezBSAlert({
                             messageText: response.errorMessage,
                             alertType: "danger",
@@ -290,16 +338,67 @@ $(document).ready(function ($) {
                 },
                 'json'
             )
-                .fail(function(response) {
-                alert('Error: ' + response.responseText);
-            });
+                .fail(function (response) {
+                    alert('Error: ' + response.responseText);
+                });
 
         }
 
     });
+
+    $('#filter-company').on('change', function (selector) {
+        var selected = $(this).find("option:selected").val();
+        $('#filter-zip').val('ALL');
+        $('#filter-zip').selectpicker('refresh');
+        $('#filter-city').val('ALL');
+        $('#filter-city').selectpicker('refresh');
+        filterByText(selected, $('#clients-list'), 0);
+    });
+
+    $('#filter-zip').on('change', function (selector) {
+        var selected = $(this).find("option:selected").val();
+        $('#filter-company').val('ALL');
+        $('#filter-company').selectpicker('refresh');
+        $('#filter-city').val('ALL');
+        $('#filter-city').selectpicker('refresh');
+        filterByText(selected, $('#clients-list'), 2);
+    });
+
+    $('#filter-city').on('change', function (selector) {
+        var selected = $(this).find("option:selected").val();
+        $('#filter-zip').val('ALL');
+        $('#filter-zip').selectpicker('refresh');
+        $('#filter-company').val('ALL');
+        $('#filter-company').selectpicker('refresh');
+        filterByText(selected, $('#clients-list'), 3);
+    });
+
+    function filterByText(text, table, col) {
+        var trArray = $('tr', table);
+        if (text.toUpperCase() == "ALL") {
+            $.each(trArray, function (i, tr) {
+                tr.style.display = '';
+            });
+        }
+        else {
+            $.each(trArray, function (i, tr) {
+                var td = $('td', tr);
+                if (td.length == 0) {
+                    return;
+                }
+                if (td[col].textContent.indexOf(text) > -1) {
+                    tr.style.display = '';
+                }
+                else {
+                    tr.style.display = 'none';
+                }
+            });
+
+        }
+    }
 });
 
-function ezBSAlert (options) {
+function ezBSAlert(options) {
     var deferredObject = $.Deferred();
     var defaults = {
         type: "alert", //alert, prompt,confirm
@@ -315,7 +414,7 @@ function ezBSAlert (options) {
     };
     $.extend(defaults, options);
 
-    var _show = function(){
+    var _show = function () {
         var headClass = "navbar-default";
         switch (defaults.alertType) {
             case "primary":
@@ -417,9 +516,6 @@ function ezBSAlert (options) {
     _show();
     return deferredObject.promise();
 }
-
-
-
 
 
 // $(document).ready(function(){
