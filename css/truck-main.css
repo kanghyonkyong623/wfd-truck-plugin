@@ -70,6 +70,11 @@ display: none;
     margin-top: 10px;
 }
 
+.modal-header{
+    background-color: #5cb85c;
+    color: white !important;
+}
+
 .switch_red {
     position: relative;
     top: 40px;

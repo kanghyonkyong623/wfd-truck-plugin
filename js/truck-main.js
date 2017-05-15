@@ -14,28 +14,27 @@ $(document).ready(function ($) {
         }
     }
 
-    $(document).ready(function() {
-        $('#new_email_address').focusout( function(e) {
-            var emailElem = $('#new_email_address');
-            var sEmail = emailElem.val();
-            var groupElem = emailElem.closest('.form-group');
-            if ($.trim(sEmail).length == 0) {
-                groupElem.removeClass('has-success');
-                groupElem.addClass('has-error');
-                $('#add_new_clinet').prop('disabled', true);
-            }
-            if (validateEmail(sEmail)) {
-                groupElem.addClass('has-success');
-                groupElem.removeClass('has-error');
-                $('#add_new_clinet').prop('disabled', false);
-            }
-            else {
-                groupElem.removeClass('has-success');
-                groupElem.addClass('has-error');
-                $('#add_new_clinet').prop('disabled', true);
-            }
-        });
+    $('#new_email_address').focusout( function(e) {
+        var emailElem = $('#new_email_address');
+        var sEmail = emailElem.val();
+        var groupElem = emailElem.closest('.form-group');
+        if ($.trim(sEmail).length == 0) {
+            groupElem.removeClass('has-success');
+            groupElem.addClass('has-error');
+            $('#add_new_clinet').prop('disabled', true);
+        }
+        if (validateEmail(sEmail)) {
+            groupElem.addClass('has-success');
+            groupElem.removeClass('has-error');
+            $('#add_new_clinet').prop('disabled', false);
+        }
+        else {
+            groupElem.removeClass('has-success');
+            groupElem.addClass('has-error');
+            $('#add_new_clinet').prop('disabled', true);
+        }
     });
+
 
     $('#generate_pw').click(function (e) {
         $('#new_password').val(randomPassword(12));
@@ -70,7 +69,7 @@ $(document).ready(function ($) {
         else{
             var data = {
                 request: 'add_new_client',
-                action: 'wfd_truck_ajax',
+                action: 'wfd_add_client',
                 new_company_name: new_company_name,
                 new_user_name: new_user_name,
                 new_email_address: new_email_address,
@@ -81,23 +80,37 @@ $(document).ready(function ($) {
                 type: 'POST',
                 data: data,
                 success: function(response){
-                    if(response.result == true) {
-                        ezBSAlert({
-                            messageText: ajax_object.successMessage,
-                            alertType: "success",
-                            headerText: ajax_object.successTitle,
-                            okButtonText: ajax_object.okText
-                        }).done(function (e) {
-                            // $("body").append('<div>Callback from alert</div>');
-                        });
-                    }
-                    else{
+                    if (response.result != true) {
                         ezBSAlert({
                             messageText: response.errorMessage,
                             alertType: "danger",
                             headerText: ajax_object.alertTitle,
                             okButtonText: ajax_object.okText
                         }).done(function (e) {
+                            // $("body").append('<div>Callback from alert</div>');
+                        });
+                    } else {
+                        ezBSAlert({
+                            messageText: ajax_object.successMessage,
+                            alertType: "success",
+                            headerText: response.message,
+                            okButtonText: ajax_object.okText
+                        }).done(function (e) {
+                            $('#add_client').modal('hide');
+                            var newRow = $('<tr  data-userid="'+ response.clientId + '">');
+                            var cols = "";
+
+                            cols += '<td>' + new_company_name + '</td>';
+                            cols += '<td/><td/><td/><td/><td/>';
+                            newRow.append(cols);
+
+                            var clientsTable = $('#clients-list');
+                            var actionTd = $('<td>', clientsTable)[0];
+                            newRow.append(actionTd);
+                            clientsTable.append(newRow);
+
+                            $('#add_client_info').data('clientId', response.clientId);
+                            $('#add_client_info').modal('show')
                             // $("body").append('<div>Callback from alert</div>');
                         });
                     }
@@ -115,6 +128,174 @@ $(document).ready(function ($) {
                 dataType:'json'});
 
         }
+    });
+
+    $('#add_clinet_core').click(function (e) {
+        var new_street = $('#new_street').val();
+        var new_zip = $('#new_zip').val();
+        var new_city = $('#new_city').val();
+        var new_phone = $('#new_phone').val();
+        var new_note = $('#new_note').val();
+        if($.trim(new_street).length == 0 || $.trim(new_zip).length == 0 || $.trim(new_city).length == 0 || $.trim(new_phone).length == 0
+            || $.trim(new_note).length == 0 ) {
+            ezBSAlert({
+                messageText: ajax_object.fillFormMessage,
+                alertType: "danger",
+                headerText: ajax_object.alertTitle,
+                okButtonText: ajax_object.okText
+            }).done(function (e) {
+                // $("body").append('<div>Callback from alert</div>');
+            });
+        }else{
+            var clientId = $('#add_client_info').data('clientId');
+            var data = {
+                action: 'wfd_update_client',
+                clientId: clientId,
+                new_street: new_street,
+                new_zip: new_zip,
+                new_city: new_city,
+                new_phone: new_phone,
+                new_note: new_note
+            };
+            $.post(
+                ajax_object.ajax_url,
+                data,
+                function(response){
+                    if(response.result == true) {
+                        ezBSAlert({
+                            messageText: response.message,
+                            alertType: "success",
+                            headerText: ajax_object.successTitle,
+                            okButtonText: ajax_object.okText
+                        }).done(function (e) {
+                            $('#add_client_info').modal('hide');
+                            var updateTarget = $('tr[data-userid="' + clientId + '"]');
+                            var td = $('td', updateTarget);
+                            td[1].textContent = new_street;
+                            td[2].textContent = new_zip;
+                            td[3].textContent = new_city;
+                            td[4].textContent = new_phone;
+                            td[5].textContent = new_note;
+                            // $("body").append('<div>Callback from alert</div>');
+                        });
+                    }
+                    else{
+                        ezBSAlert({
+                            messageText: response.errorMessage,
+                            alertType: "danger",
+                            headerText: ajax_object.alertTitle,
+                            okButtonText: ajax_object.okText
+                        }).done(function (e) {
+                            // $("body").append('<div>Callback from alert</div>');
+                        });
+                    }
+                },
+                'json'
+            )
+                .fail(function(response) {
+                    alert('Error: ' + response.responseText);
+                });
+
+        }
+    });
+
+    $('.btn-client-view').click(function (e) {
+        setValuesToDialog(this);
+        $('#add_clinet_core').prop('disabled', true);
+        $('#add_client_info').modal('show');
+    });
+
+    $('.btn-client-edit').click(function (e) {
+        setValuesToDialog(this);
+        $('#add_client_info').modal('show');
+    });
+
+    function setValuesToDialog(buttonElem){
+        var clientId = $(buttonElem).data('clientId');
+        var trElem = $('tr[data-user-id="' + clientId + '"]', $('#clients-list'));
+        var tdArray = $('td', trElem);
+        $('#new-company').val(tdArray[0].textContent);
+        $('#new-street').val(tdArray[1].textContent);
+        $('#new-zip').val(tdArray[2].textContent);
+        $('#new-city').val(tdArray[3].textContent);
+        $('#new-phone').val(tdArray[4].textContent);
+        $('#new-note').val(tdArray[5].textContent);
+    }
+
+    $('.btn-driver-save').click(function (e) {
+        var modalDlg = this.closest('.modal');
+        var firstName = $('input[name="fname"]', modalDlg);
+        var lastName = $('input[name="lname"]', modalDlg);
+        var street = $('input[name="street"]', modalDlg);
+        var city = $('input[name="city"]', modalDlg);
+        var phone = $('input[name="phone"]', modalDlg);
+        var note = $('input[name="note"]', modalDlg);
+
+        if($.trim(firstName.val()).length == 0 || $.trim(lastName.val()).length == 0 || $.trim(street.val()).length == 0 || $.trim(city.val()).length == 0
+            || $.trim(phone.val()).length == 0 || $.trim(note.val()).length == 0){
+            ezBSAlert({
+                messageText: ajax_object.fillFormMessage,
+                alertType: "danger",
+                headerText: ajax_object.alertTitle,
+                okButtonText: ajax_object.okText
+            }).done(function (e) {
+                // $("body").append('<div>Callback from alert</div>');
+            });
+        }
+        else{
+            var driverId = $(modalDlg).data('driverId');
+            var data = {
+                action: 'wfd_update_driver',
+                driverId: driverId,
+                firstName: firstName.val(),
+                lastName: lastName.val(),
+                street: street.val(),
+                city: city.val(),
+                phone: phone.val(),
+                note: note.val()
+            };
+            $.post(
+                ajax_object.ajax_url,
+                data,
+                function(response){
+                    if(response.result == true) {
+                        ezBSAlert({
+                            messageText: response.message,
+                            alertType: "success",
+                            headerText: ajax_object.successTitle,
+                            okButtonText: ajax_object.okText
+                        }).done(function (e) {
+                            $(modalDlg).modal('hide');
+                            var updateTarget = $('tr[driver-id="' + driverId + '"]');
+                            var td = $('td', updateTarget);
+                            td[1].textContent = data.firstName;
+                            td[2].textContent = data.lastName;
+                            td[3].textContent = data.street;
+                            td[4].textContent = data.city;
+                            td[5].textContent = data.phone;
+                            td[6].textContent = data.note;
+                            // $("body").append('<div>Callback from alert</div>');
+                        });
+                    }
+                    else{
+                        ezBSAlert({
+                            messageText: response.errorMessage,
+                            alertType: "danger",
+                            headerText: ajax_object.alertTitle,
+                            okButtonText: ajax_object.okText
+                        }).done(function (e) {
+                            // $("body").append('<div>Callback from alert</div>');
+                        });
+                    }
+                },
+                'json'
+            )
+                .fail(function(response) {
+                alert('Error: ' + response.responseText);
+            });
+
+        }
+
     });
 });
 
