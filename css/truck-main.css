@@ -47,3 +47,25 @@ display: none;
 .btn-link, .btn-link:hover, .btn-link:focus, .btn-link:active {
     padding: 0px 0px;
 }
+.bootstrap-table {
+    margin: 20px 0px;
+}
+.col-sm-4 > label{
+    padding-left: 30px;
+    padding-top: 8px;
+}
+
+#filter-company + div{
+    max-width: 160px;
+}
+#filter-zip + div{
+    max-width: 100px;
+    margin-left: 10px;
+}
+#filter-city + div{
+    max-width: 160px;
+}
+
+.tab-pane{
+    margin-top: 10px;
+}

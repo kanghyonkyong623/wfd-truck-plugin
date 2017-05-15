@@ -23,6 +23,64 @@ function plugin_init()
     load_plugin_textdomain('wfd_truck', false, dirname(plugin_basename(__FILE__)) . '/languages/');
 }
 
+//add_action( 'plugins_loaded', 'my_enqueue' );
+function my_enqueue() {
+
+	wp_enqueue_style('bootstrap-style', 'http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css', null);
+	wp_enqueue_style('bootstrap-theme', 'http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css', null);
+	wp_enqueue_style('bootstrap-select', 'https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.6.4/css/bootstrap-select.min.css', null);
+	wp_enqueue_script('jquery-js', 'http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js', null);
+	wp_register_script('bootstrap-main-js', 'http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js');
+	wp_enqueue_script('bootstrap-select-js', 'https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.6.4/js/bootstrap-select.min.js', null);
+	wp_enqueue_script('bootstrap-main-js');
+	wp_enqueue_style('bootstrap-responsive', 'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/css/bootstrap-responsive.css', null);
+	wp_enqueue_style('bootstrap-table-css', 'https://rawgit.com/wenzhixin/bootstrap-table/master/src/bootstrap-table.css', null);
+	wp_enqueue_script('bootstrap-table-js', 'https://rawgit.com/wenzhixin/bootstrap-table/master/src/bootstrap-table.js', null);
+	wp_register_style('truck-main-style', plugins_url('css/truck-main.css', __FILE__));
+	wp_enqueue_style('truck-main-style');
+
+	wp_enqueue_script( 'ajax-script', plugins_url( '/js/truck-main.js', __FILE__ ), array('jquery-js') );
+
+    // in JavaScript, object properties are accessed as ajax_object.ajax_url, ajax_object.we_value
+    wp_localize_script( 'ajax-script', 'ajax_object',
+        array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'fillFormMessage' => __('Please fill all of the fields!', 'wfd_truck'),
+               'alertTitle' => __('Alert', 'wfd_truck'), 'okText' => __('OK', 'wfd_truck'),
+               'successMessage' => __('Congratulate! Your account successfully created!', 'wdf_truck'), 'successTitle' => __('Succeed', 'wdf_truck') ) );
+}
+
+add_action( 'wp_ajax_wfd_truck_ajax', 'wfd_truck_ajax' );
+add_action( 'wp_ajax_nopriv_wfd_truck_ajax', 'wfd_truck_ajax');
+
+function wfd_truck_ajax() {
+    global $wpdb;
+    if(isset($_POST['request']) && $_POST['request'] == 'add_new_client'){
+        $new_user_name = $_POST['new_user_name'];
+        $new_email_address = $_POST['new_email_address'];
+        $new_company_name = $_POST['new_company_name'];
+        $new_password = $_POST['new_password'];
+
+        $result_array = array();
+        $tbl_wp_users = $wpdb->users;
+	    $existing_users = $wpdb->get_results("SELECT * FROM $tbl_wp_users WHERE `display_name`='$new_user_name' OR `user_email`='$new_email_address'", OBJECT);
+	    if(count($existing_users) > 0){
+	        $result_array['result'] = false;
+	        $result_array['errorMessage'] = __('Your name or email address is already using on this site!', 'wfd_truck');
+        }
+        else{
+	        $tbl_clients = $wpdb->prefix . "wfd_truck_client_info";
+	        $sql_add_client = "INSERT INTO $tbl_clients (`username`, `email`, `company`, `password`) values ('$new_user_name', '$new_email_address', '$new_company_name', '$new_password')";
+	        if($wpdb->query($sql_add_client) != false){
+		        $result_array['result'] = true;
+            }
+            else{
+	            $result_array['result'] = false;
+	            $result_array['errorMessage'] = $wpdb->last_error;
+            }
+        }
+        echo json_encode($result_array);
+    }
+    wp_die();
+}
 function wfd_truck_settings_fn()
 {
     global $wpdb;
@@ -986,7 +1044,7 @@ function wfd_ref_truck_plugin_activation()
     `id` int(9) NOT NULL AUTO_INCREMENT,
     `cid` int(9) NOT NULL,
   `service` varchar(200) NOT NULL,
-  `desc` varchar(300) NOT NULL,
+  `description` varchar(300) NOT NULL,
   `price` varchar(50) NOT NULL,
       PRIMARY KEY (id)
     ) $charset_collate";
@@ -1053,30 +1111,11 @@ function wfd_check_email_fn()
     die();
 }
 
-function wfd_truck_add_script_css()
-{
-    wp_enqueue_style('bootstrap-style', 'http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css', null);
-    wp_enqueue_style('bootstrap-theme', 'http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css', null);
-    wp_enqueue_style('bootstrap-select', 'https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.6.4/css/bootstrap-select.min.css', null);
-    wp_enqueue_script('jquery-js', 'http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js', null);
-    wp_register_script('bootstrap-main-js', 'http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js');
-    wp_enqueue_script('bootstrap-select-js', 'https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.6.4/js/bootstrap-select.min.js', null);
-    wp_enqueue_script('bootstrap-main-js');
-    wp_enqueue_style('bootstrap-responsive', 'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/css/bootstrap-responsive.css', null);
-
-    wp_register_style('truck-main-style', plugins_url('css/truck-main.css', __FILE__));
-    wp_enqueue_style('truck-main-style');
-
-
-}
-
 add_shortcode('wfd_truck_user_dashboard', 'wfd_truck_user_dashboard_fn');
 
 function wfd_truck_user_dashboard_fn()
 {
-
-    wfd_truck_add_script_css();
-
+	my_enqueue();
     if (!isset($_GET['action']))
         $_GET['action'] = 'profile';
 
@@ -1232,9 +1271,9 @@ function wfd_truck_user_dashboard_fn()
                         $tbl_prices = $wpdb->prefix . "wfd_truck_truck_prices";
                         $res_prices = $wpdb->get_results("select * from $tbl_prices where cid=$id", OBJECT);
 
-                        $res_company_list = $wpdb->get_results("SELECT DISTINCT 'company' FROM $tbl_client_info ORDER BY 'company'", OBJECT);
-                        $res_zip_list = $wpdb->get_results("SELECT DISTINCT 'zip' FROM $tbl_client_info ORDER BY 'zip'", OBJECT);
-                        $res_city_list = $wpdb->get_results("SELECT DISTINCT 'city' FROM $tbl_client_info ORDER BY 'city'", OBJECT);
+                        $res_company_list = $wpdb->get_results("SELECT DISTINCT `company` FROM $tbl_client_info ORDER BY 'company'", OBJECT);
+                        $res_zip_list = $wpdb->get_results("SELECT DISTINCT `zip` FROM $tbl_client_info ORDER BY 'zip'", OBJECT);
+                        $res_city_list = $wpdb->get_results("SELECT DISTINCT `city` FROM $tbl_client_info ORDER BY 'city'", OBJECT);
 
 // echo "select * from $tbl_driver_info where cid=$id and type='Driver'";
                         //wp_wfd_truck_truck_truck_info
@@ -1253,7 +1292,7 @@ function wfd_truck_user_dashboard_fn()
                         <br>
                         <ul class="nav nav-tabs" role="tablist">
                             <?php
-                            if (count($res_client_list) == 0 || $res_client_info[0]->type == 0) {
+                            if (count($res_client_list) == 0 || $res_client_info[0]->type == 1) {
                                 ?>
                                 <li role="presentation"><a href="#client_list" aria-controls="Clients List" role="tab"
                                                            data-toggle="tab"><?php _e('Clients List', 'wfd_truck'); ?></a>
@@ -1280,38 +1319,51 @@ function wfd_truck_user_dashboard_fn()
                         </ul>
                         <div class="tab-content">
                             <?php
-                            if (count($res_client_list) == 0 || $res_client_info[0]->type == 0) {
+                            if (count($res_client_list) == 0 || $res_client_info[0]->type == 1) {
                                 ?>
                                 <div role="tabpanel" class="tab-pane" id="client_list">
                                     <div class="col-sm-9">
                                         <h2><?php _e('Clients List', 'wfd_truck'); ?></h2>
-                                        <div style="display: flex;">
-                                            <select class="selectpicker form-control">
-                                                <?php
-                                                foreach ($res_company_list as $company){
-                                                    echo "<option>$company->company</option>";
-                                                 } ?>
-                                            </select>
-                                            <select class="selectpicker form-control">
-                                                <?php
-                                                foreach ($res_zip_list as $zip){
-                                                    echo "<option>$zip->zip</option>";
-                                                } ?>
-                                            </select>
-                                            <select class="selectpicker form-control">
-                                                <?php
-                                                foreach ($res_city_list as $city){
-                                                    echo "<option>$city->city</option>";
-                                                } ?>
-                                            </select>
+                                        <div class="row" style="margin-left: 0px;">
+                                            <div class="col-sm-3" style="padding-left: 0px;"><select
+                                                        class="selectpicker form-control" id="filter-company">
+                                                    <option value="" selected disabled
+                                                            hidden><?php _e('filter company', 'wfd_truck') ?></option>
+                                                    <?php
+                                                    foreach ($res_company_list as $company) {
+                                                        echo "<option>" . $company->company . "</option>";
+                                                    } ?>
+                                                </select></div>
+
+                                            <div class="col-sm-2"><select class="selectpicker form-control"
+                                                                          id="filter-zip">
+                                                    <option value="" selected disabled
+                                                            hidden><?php _e('filter ZIP', 'wfd_truck') ?></option>
+                                                    <?php
+                                                    foreach ($res_zip_list as $zip) {
+                                                        echo "<option>$zip->zip</option>";
+                                                    } ?>
+                                                </select></div>
+                                            <div class="col-sm-3"><select class="selectpicker form-control"
+                                                                          id="filter-city">
+                                                    <option value="" selected disabled
+                                                            hidden><?php _e('filter city', 'wfd_truck') ?></option>
+                                                    <?php
+                                                    foreach ($res_city_list as $city) {
+                                                        echo "<option>$city->city</option>";
+                                                    } ?>
+                                                </select></div>
                                         </div>
-                                        <table class="table table-striped">
+                                        <table class="table table-striped" data-toggle="table">
                                             <thead>
                                             <tr>
-                                                <th><?php _e('Company', 'wfd_truck'); ?></th>
-                                                <th><?php _e('Street', 'wfd_truck'); ?></th>
-                                                <th><?php _e('Zip', 'wfd_truck'); ?></th>
-                                                <th><?php _e('City', 'wfd_truck'); ?></th>
+                                                <th data-field="company"
+                                                    data-sortable="true"><?php _e('Company', 'wfd_truck'); ?></th>
+                                                <th data-field="street"><?php _e('Street', 'wfd_truck'); ?></th>
+                                                <th data-field="zip"
+                                                    data-sortable="true"><?php _e('Zip', 'wfd_truck'); ?></th>
+                                                <th data-field="city"
+                                                    data-sortable="true"><?php _e('City', 'wfd_truck'); ?></th>
                                                 <th><?php _e('Phone', 'wfd_truck'); ?></th>
                                                 <th><?php _e('Note', 'wfd_truck'); ?></th>
                                                 <th><?php _e('Action', 'wfd_truck'); ?></th>
@@ -1321,7 +1373,7 @@ function wfd_truck_user_dashboard_fn()
                                             <?php
 
                                             foreach ($res_client_list as $client) { ?>
-                                                <tr>
+                                                <tr data-userid="<?php echo $client->id?>">
                                                     <td><?php echo $client->company ?></td>
                                                     <td><?php echo $client->street ?></td>
                                                     <td><?php echo $client->zip ?></td>
@@ -1330,11 +1382,13 @@ function wfd_truck_user_dashboard_fn()
                                                     <td><?php echo $client->note ?></td>
                                                     <td>
                                                         <button type="button" class="btn btn-link" data-toggle="modal"
-                                                                data-target="#mdvide_<?php echo $client->id ?>"><?php _e('View', 'wfd_truck');?></button>
-                                                        || <button type="button" class="btn btn-link" data-toggle="modal"
-                                                                   data-target="#mdvide_<?php echo $client->id ?>"><?php _e('Edit', 'wfd_truck'); ?></button>
-                                                        || <button type="button" class="btn btn-link" data-toggle="modal"
-                                                                   data-target="#mdvide_<?php echo $client->id ?>"><?php _e('Delete', 'wfd_truck'); ?></button>
+                                                                data-target="#mdvide_<?php echo $client->id ?>"><?php _e('View', 'wfd_truck'); ?></button>
+                                                        ||
+                                                        <button type="button" class="btn btn-link" data-toggle="modal"
+                                                                data-target="#mdvide_<?php echo $client->id ?>"><?php _e('Edit', 'wfd_truck'); ?></button>
+                                                        ||
+                                                        <button type="button" class="btn btn-link" data-toggle="modal"
+                                                                data-target="#mdvide_<?php echo $client->id ?>"><?php _e('Delete', 'wfd_truck'); ?></button>
 
 
                                                         <!-- Modal -->
@@ -1372,6 +1426,80 @@ function wfd_truck_user_dashboard_fn()
                                             <?php } ?>
                                             </tbody>
                                         </table>
+                                        <button type="button"
+                                                class="btn btn-primary" data-toggle="modal" data-target="#add_client">
+                                            <span class="glyphicon glyphicon-user"></span><span
+                                                    class="glyphicon glyphicon-plus"></span><?php _e('add Client', 'wfd_truck'); ?>
+                                        </button>
+                                    </div>
+                                    <div class="modal fade" id="add_client"
+                                         tabindex="-1"
+                                         role="dialog" aria-labelledby="myModalLabel">
+                                        <div class="modal-dialog" role="document">
+
+                                            <form method="post">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <button type="button" class="close"
+                                                                data-dismiss="modal"
+                                                                aria-label="Close"><span
+                                                                    aria-hidden="true">&times;</span>
+                                                        </button>
+                                                        <h4 class="modal-title"><?php _e('New Client', 'wfd_truck'); ?></h4>
+                                                    </div>
+                                                    <div class="well">
+                                                        <div class="container-fluid">
+                                                            <div class="row form-group">
+                                                                <div class="col-sm-4">
+                                                                    <label><?php _e('Company Name', 'wfd_truck') ?></label>
+                                                                </div>
+                                                                <div class="col-sm-4"><input class="form-control"
+                                                                                             id="new_company_name">
+                                                                </div>
+                                                            </div>
+                                                            <div class="row form-group">
+                                                                <div class="col-sm-4">
+                                                                    <label><?php _e('User Name', 'wfd_truck') ?></label>
+                                                                </div>
+                                                                <div class="col-sm-4"><input class="form-control"
+                                                                                             id="new_user_name">
+                                                                </div>
+                                                            </div>
+                                                            <div class="row form-group">
+                                                                <div class="col-sm-4">
+                                                                    <label for="new_email_address"><?php _e('Email', 'wfd_truck') ?></label>
+                                                                </div>
+                                                                <div class="col-sm-4"><input class="form-control" type="email"
+                                                                                             id="new_email_address" name="email_name">
+                                                                </div>
+                                                            </div>
+                                                            <div class="row form-group">
+                                                                <div class="col-sm-4">
+                                                                    <label><?php _e('Password', 'wfd_truck') ?></label>
+                                                                </div>
+                                                                <div class="col-sm-4"><input class="form-control"
+                                                                                             id="new_password">
+                                                                </div>
+                                                                <div class="col-sm-4">
+                                                                    <button type="button" class="btn btn-primary" id="generate_pw">
+                                                                        <span class="glyphicon glyphicon-pencil"></span>
+                                                                        <?php _e('Generate', 'wfd_truck'); ?>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                    <div class="modal-footer form-group">
+                                                        <button type="button" class="btn btn-primary"
+                                                              id="add_new_clinet"><span
+                                                                    class="glyphicon glyphicon-save-file"></span> <?php _e('Save', 'wfd_truck'); ?>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+
+                                        </div>
                                     </div>
                                 </div>
                             <?php } ?>
