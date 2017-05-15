@@ -69,3 +69,8 @@ display: none;
 .tab-pane{
     margin-top: 10px;
 }
+
+.modal-header{
+    background-color: #5cb85c;
+    color: white !important;
+}
