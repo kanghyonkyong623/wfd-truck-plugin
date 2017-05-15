@@ -86,6 +86,7 @@ display: none;
 }
 
 .switch input {display:none;}
+.switch_red input {display:none;}
 
 .slider {
     position: absolute;
@@ -109,6 +110,10 @@ display: none;
     background-color: white;
     -webkit-transition: .4s;
     transition: .4s;
+}
+
+.switch_red > input:checked + .slider {
+    background-color: red;
 }
 
 input:checked + .slider {

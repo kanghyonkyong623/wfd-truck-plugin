@@ -3249,11 +3249,11 @@ function wfd_truck_user_dashboard_fn()
                                                 <button type="button" class="btn btn-link" data-toggle="modal"
                                                         data-target="#md_tpview_<?php echo $ti->id ?>"><?php _e('', 'wfd_truck'); ?>
                                                     <?php _e('Edit', 'wfd_truck'); ?>
-                                                </button> ||
+                                                </button>||
                                                 <button type="button" class="btn btn-link" data-toggle="modal"
                                                         data-target="#md_tpnew_<?php echo $ti->id ?>"><?php _e('', 'wfd_truck'); ?>
                                                     <?php _e('Del', 'wfd_truck'); ?>
-                                                </button> ||
+                                                </button>||
                                                 <button type="button" class="btn btn-link" data-toggle="modal"
                                                         data-target="#md_tpcopy_<?php echo $ti->id ?>"><?php _e('', 'wfd_truck'); ?>
                                                     <?php _e('Copy', 'wfd_truck'); ?>
@@ -3274,7 +3274,7 @@ function wfd_truck_user_dashboard_fn()
                                                             <div class="row">
                                                                 <div class="col-sm-8">
                                                                     <h2><?php _e('Truck Data', 'wfd_truck'); ?></h2>
-                                                                    <form class="form-horizontal" action="#">
+                                                                    <form class="form-horizontal">
                                                                       <div class="col-sm-6">
                                                                         <div class="form-group">
                                                                             <label class="control-label col-sm-5"><?php _e('ID', 'wfd_truck'); ?>:</label>
@@ -3366,7 +3366,7 @@ function wfd_truck_user_dashboard_fn()
                                                                     <form>
                                                                         <div class="form-group">
                                                                             <label><?php _e('Type', 'wfd_truck'); ?></label>
-                                                                            <select class="form-control" id="">
+                                                                            <select class="form-control">
                                                                                 <option><?php echo $ti->type ?></option>
                                                                                 <option><?php _e('Rig', 'wfd_truck'); ?></option>
                                                                                 <option><?php _e('Spectacle truck', 'wfd_truck'); ?></option>
@@ -3480,17 +3480,14 @@ function wfd_truck_user_dashboard_fn()
                                             <td><?php echo $cn->phone ?></td>
                                             <td><?php echo $cn->note ?></td>
                                             <td><?php echo $cn->category ?></td>
-                                            <td><?php _e('View', 'wfd_truck'); ?> | <?php _e('Edit', 'wfd_truck'); ?>
-                                                | <?php _e('Del', 'wfd_truck'); ?>
-                                                | <?php _e('Copy', 'wfd_truck'); ?></td>
+                                            <td><?php _e('Edit', 'wfd_truck'); ?> || <?php _e('Del', 'wfd_truck'); ?></td>
                                         </tr>
                                     <?php } ?>
                                     </tbody>
                                 </table>
                                 <button class="btn btn-primary" type="button" data-toggle="collapse"
                                         data-target="#addtno" aria-expanded="false" aria-controls="addtno">
-                                    </span><span
-                                            class="glyphicon glyphicon-plus"></span><?php _e('  Add No', 'wfd_truck'); ?>
+                                       <span class="glyphicon glyphicon-plus"></span><?php _e('  Add No', 'wfd_truck'); ?>
                                 </button>
 
                                 <div class="collapse" id="addtno">
@@ -3546,18 +3543,14 @@ function wfd_truck_user_dashboard_fn()
                                             <td><?php echo $p->service ?></td>
                                             <td><?php echo $p->description ?></td>
                                             <td><?php echo $p->price ?></td>
-
-                                            <td><?php _e('View', 'wfd_truck'); ?> | <?php _e('Edit', 'wfd_truck'); ?>
-                                                | <?php _e('Del', 'wfd_truck'); ?>
-                                                | <?php _e('Copy', 'wfd_truck'); ?></td>
+                                            <td><?php _e('Edit', 'wfd_truck'); ?> || <?php _e('Del', 'wfd_truck'); ?></td>
                                         </tr>
                                     <?php } ?>
                                     </tbody>
                                 </table>
                                 <button class="btn btn-primary" type="button" data-toggle="collapse"
                                         data-target="#addservice" aria-expanded="false" aria-controls="addservice">
-                                    </span><span
-                                            class="glyphicon glyphicon-plus"></span><?php _e('  Add Service', 'wfd_truck'); ?>
+                                        <span class="glyphicon glyphicon-plus"></span><?php _e('  Add Service', 'wfd_truck'); ?>
                                 </button>
 
                                 <div class="collapse" id="addservice">
