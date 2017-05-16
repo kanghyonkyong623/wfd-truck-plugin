@@ -23,7 +23,7 @@ function plugin_init()
     load_plugin_textdomain('wfd_truck', false, dirname(plugin_basename(__FILE__)) . '/languages/');
 }
 
-//add_action( 'plugins_loaded', 'my_enqueue' );
+//add_action( 'wp_enqueue_scripts', 'my_enqueue' );
 function my_enqueue()
 {
 
@@ -33,6 +33,7 @@ function my_enqueue()
     wp_enqueue_style('bootstrap-responsive', 'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/css/bootstrap-responsive.css', null);
     wp_enqueue_style('bootstrap-table-css', 'https://rawgit.com/wenzhixin/bootstrap-table/master/src/bootstrap-table.css', null);
     wp_enqueue_style('font-awesome-css', 'http://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css', null);
+//    wp_dequeue_style('style');
 
     wp_enqueue_script('jquery-js', 'http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js', null);
     wp_enqueue_script('bootstrap-main-js', 'http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js');
@@ -51,7 +52,8 @@ function my_enqueue()
     wp_localize_script('ajax-script', 'ajax_object',
         array('ajax_url' => admin_url('admin-ajax.php'), 'fillFormMessage' => __('Please fill all of the fields!', 'wfd_truck'),
             'alertTitle' => __('Alert', 'wfd_truck'), 'okText' => __('OK', 'wfd_truck'),
-            'successTitle' => __('Succeed', 'wfd_truck'), 'deleteConformMessage' => __('Do you confirm to delete?', 'wfd_truck')));
+            'successTitle' => __('Succeed', 'wfd_truck'), 'deleteConformMessage' => __('Do you confirm to delete?', 'wfd_truck'),
+            'saveConformMessage'=>__('Do you want to save changes of core data?', 'wfd_truck')));
 }
 
 add_action('wp_ajax_wfd_add_client', 'wfd_add_client');
@@ -69,7 +71,7 @@ function wfd_add_client()
     $new_user_name = $_POST['new_user_name'];
     $new_email_address = $_POST['new_email_address'];
     $new_company_name = $_POST['new_company_name'];
-    $new_password = $_POST['new_password'];
+    $new_password = md5($_POST['new_password']);
 
     $result_array = array();
     $tbl_wp_users = $wpdb->users;
@@ -79,14 +81,25 @@ function wfd_add_client()
         $result_array['errorMessage'] = __('Your name or email address is already using on this site!', 'wfd_truck');
     } else {
         $tbl_clients = $wpdb->prefix . "wfd_truck_client_info";
-        $sql_add_client = "INSERT INTO $tbl_clients (`username`, `email`, `company`, `password`) values ('$new_user_name', '$new_email_address', '$new_company_name', '$new_password')";
-        if ($wpdb->query($sql_add_client) != false) {
-            $result_array['result'] = true;
-            $result_array['message'] = __('Congratulate! Your account successfully created!', 'wdf_truck');
-            $result_array['clientId'] = $wpdb->insert_id;
-        } else {
+        $existing_users = $wpdb->get_results("SELECT * FROM $tbl_clients WHERE `username`='$new_user_name' OR `email`='$new_email_address'", OBJECT);
+        if (count($existing_users) > 0) {
             $result_array['result'] = false;
-            $result_array['errorMessage'] = $wpdb->last_error;
+            $result_array['errorMessage'] = __('Your name or email address is already using on this site!', 'wfd_truck');
+        } else {
+            $clientIds = $wpdb->get_results("SELECT ID FROM $tbl_clients", OBJECT);
+            if (count($clientIds) > 0) {
+                $sql_add_client = "INSERT INTO $tbl_clients (`username`, `email`, `company`, `password`) values ('$new_user_name', '$new_email_address', '$new_company_name', '$new_password')";
+            } else {
+                $sql_add_client = "INSERT INTO $tbl_clients (`type`, `username`, `email`, `company`, `password`) values ('0', '$new_user_name', '$new_email_address', '$new_company_name', '$new_password')";
+            }
+            if ($wpdb->query($sql_add_client) != false) {
+                $result_array['result'] = true;
+                $result_array['message'] = __('Congratulate! Your account successfully created!', 'wdf_truck');
+                $result_array['clientId'] = $wpdb->insert_id;
+            } else {
+                $result_array['result'] = false;
+                $result_array['errorMessage'] = $wpdb->last_error;
+            }
         }
     }
     echo json_encode($result_array);
@@ -184,12 +197,6 @@ function wfd_truck_settings_fn()
 //  print_r($res_qualification);
     ?>
 
-    <link rel="stylesheet" href="<?php echo plugin_dir_url(__FILE__) ?>/css/bootstrap.min.css">
-    <link rel="stylesheet" href="<?php echo plugin_dir_url(__FILE__) ?>/css/bootstrap-theme.min.css">
-    <link rel="stylesheet" href="<?php echo plugin_dir_url(__FILE__) ?>/css/jquery.dataTables.min.css">
-
-    <script src="<?php echo plugin_dir_url(__FILE__) ?>/js/jquery.dataTables.min.js"></script>
-    <script src="<?php echo plugin_dir_url(__FILE__) ?>/js/bootstrap.min.js"></script>
     <style>#wpbody-content {
             width: 98.5%;
         }</style>
@@ -481,12 +488,6 @@ function wfd_truck_management_fn()
     ?>
 
 
-    <link rel="stylesheet" href="<?php echo plugin_dir_url(__FILE__) ?>/css/bootstrap.min.css">
-    <link rel="stylesheet" href="<?php echo plugin_dir_url(__FILE__) ?>/css/bootstrap-theme.min.css">
-    <link rel="stylesheet" href="<?php echo plugin_dir_url(__FILE__) ?>/css/jquery.dataTables.min.css">
-
-    <script src="<?php echo plugin_dir_url(__FILE__) ?>/js/jquery.dataTables.min.js"></script>
-    <script src="<?php echo plugin_dir_url(__FILE__) ?>/js/bootstrap.min.js"></script>
     <style>#wpbody-content {
             width: 98.5%;
         }</style>
@@ -710,156 +711,119 @@ function wfd_truck_init_fn()
     global $wpdb;
 
 
-    if (isset($_POST['save_ranking'])) {
-        $rank_item = $_POST['rank_item'];
-        $tbl_ranking = $wpdb->prefix . "wfd_truck_driver_ranking";
-        $sql_ranking = "INSERT INTO $tbl_ranking (rank_item) values ('$rank_item')";
-        $wpdb->query($sql_ranking);
-    }
-    if (isset($_POST['update_ranking'])) {
-        $rank_item = $_POST['rank_item'];
-        $id = $_POST['id'];
-        $tbl_ranking = $wpdb->prefix . "wfd_truck_driver_ranking";
-        $sql = "UPDATE $tbl_ranking set rank_item='$rank_item' where id=$id";
-        $wpdb->query($sql);
+//    if (isset($_POST['save_ranking'])) {
+//        $rank_item = $_POST['rank_item'];
+//        $tbl_ranking = $wpdb->prefix . "wfd_truck_driver_ranking";
+//        $sql_ranking = "INSERT INTO $tbl_ranking (rank_item) values ('$rank_item')";
+//        $wpdb->query($sql_ranking);
+//    }
+//    if (isset($_POST['update_ranking'])) {
+//        $rank_item = $_POST['rank_item'];
+//        $id = $_POST['id'];
+//        $tbl_ranking = $wpdb->prefix . "wfd_truck_driver_ranking";
+//        $sql = "UPDATE $tbl_ranking set rank_item='$rank_item' where id=$id";
+//        $wpdb->query($sql);
+//
+//    }
 
-        ?>
+//    if (isset($_POST['save_license'])) {
+//        $licenses = $_POST['licenses'];
+//        $tbl_driver_licences = $wpdb->prefix . "wfd_truck_driver_licences";
+//        $sql = "INSERT INTO $tbl_driver_licences (licences) values ('$licenses')";
+//        $wpdb->query($sql);
+//    }
+//    if (isset($_POST['save_qualification'])) {
+//        $qualification = $_POST['qualification'];
+//        $tbl_driver_qualification = $wpdb->prefix . "wfd_truck_driver_qualification";
+//        $sql = "INSERT INTO $tbl_driver_qualification (qualification) values ('$qualification')";
+//        $wpdb->query($sql);
+//    }
+//    if (isset($_POST['update_licenses'])) {
+//        $licenses = $_POST['licenses'];
+//        $id = $_POST['id'];
+//        $tbl_driver_licences = $wpdb->prefix . "wfd_truck_driver_licences";
+//        $sql = "UPDATE $tbl_driver_licences set licences='$licenses' where id=$id";
+//        $wpdb->query($sql);
+//    }
+//    if (isset($_POST['update_qualification'])) {
+//        $id = $_POST['id'];
+//        $qualification = $_POST['qualification'];
+//        $tbl_driver_qualification = $wpdb->prefix . "wfd_truck_driver_qualification";
+//        $sql = "UPDATE $tbl_driver_qualification set qualification='$qualification' where id=$id";
+//        $wpdb->query($sql);
+//    }
 
-        <script>
-            setTimeout(function () {
-                window.location.href = "<?php echo admin_url();?>admin.php?page=wfd_truck_settings";
-            }, 3000);
-        </script>
-        <?php
-    }
-
-    if (isset($_POST['save_license'])) {
-        $licenses = $_POST['licenses'];
-        $tbl_driver_licences = $wpdb->prefix . "wfd_truck_driver_licences";
-        $sql = "INSERT INTO $tbl_driver_licences (licences) values ('$licenses')";
-        $wpdb->query($sql);
-    }
-    if (isset($_POST['save_qualification'])) {
-        $qualification = $_POST['qualification'];
-        $tbl_driver_qualification = $wpdb->prefix . "wfd_truck_driver_qualification";
-        $sql = "INSERT INTO $tbl_driver_qualification (qualification) values ('$qualification')";
-        $wpdb->query($sql);
-    }
-    if (isset($_POST['update_licenses'])) {
-        $licenses = $_POST['licenses'];
-        $id = $_POST['id'];
-        $tbl_driver_licences = $wpdb->prefix . "wfd_truck_driver_licences";
-        $sql = "UPDATE $tbl_driver_licences set licences='$licenses' where id=$id";
-        $wpdb->query($sql);
-        ?>
-        <script>
-            setTimeout(function () {
-                window.location.href = "<?php echo admin_url();?>admin.php?page=wfd_truck_settings";
-            }, 3000);
-        </script>
-        <?php
-    }
-    if (isset($_POST['update_qualification'])) {
-        $id = $_POST['id'];
-        $qualification = $_POST['qualification'];
-        $tbl_driver_qualification = $wpdb->prefix . "wfd_truck_driver_qualification";
-        $sql = "UPDATE $tbl_driver_qualification set qualification='$qualification' where id=$id";
-        $wpdb->query($sql);
-        ?>
-        <script>
-            setTimeout(function () {
-                window.location.href = "<?php echo admin_url();?>admin.php?page=wfd_truck_settings";
-            }, 3000);
-        </script>
-        <?php
-    }
-
-    if (isset($_POST['add_new_clinet'])) {
-        $company = $_POST['company'];
-        $email = $_POST['email'];
-        $username = $_POST['username'];
-        $password = md5($_POST['password']);
-        $street = $_POST['street'];
-        $zip = $_POST['zip'];
-        $city = $_POST['city'];
-        $phone = $_POST['phone'];
-        $fax = $_POST['fax'];
-        $website = $_POST['website'];
-        $emergency_phone = $_POST['emergency_phone'];
-        $note = $_POST['note'];
-
-        $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
-        $sql_ins_client_info = "INSERT INTO $tbl_client_info (`company`, `email`, `username`, `password`, `street`, `zip`, `city`, `phone`, `fax`,  `website`, `emergency_phone`, `note`) "
-            . "values ('$company','$email', '$username', '$password', '$street','$zip', '$city', '$phone', '$fax', '$website', '$emergency_phone', '$note');";
-        //echo $sql_ins_client_info;
-        $wpdb->query($sql_ins_client_info);
-    }
+//    if (isset($_POST['add_new_clinet'])) {
+//        $company = $_POST['company'];
+//        $email = $_POST['email'];
+//        $username = $_POST['username'];
+//        $password = md5($_POST['password']);
+//        $street = $_POST['street'];
+//        $zip = $_POST['zip'];
+//        $city = $_POST['city'];
+//        $phone = $_POST['phone'];
+//        $fax = $_POST['fax'];
+//        $website = $_POST['website'];
+//        $emergency_phone = $_POST['emergency_phone'];
+//        $note = $_POST['note'];
+//
+//        $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
+//        $sql_ins_client_info = "INSERT INTO $tbl_client_info (`company`, `email`, `username`, `password`, `street`, `zip`, `city`, `phone`, `fax`,  `website`, `emergency_phone`, `note`) "
+//            . "values ('$company','$email', '$username', '$password', '$street','$zip', '$city', '$phone', '$fax', '$website', '$emergency_phone', '$note');";
+//        //echo $sql_ins_client_info;
+//        $wpdb->query($sql_ins_client_info);
+//    }
 
 
-    if (isset($_POST['chang_pass'])) {
-        $id = $_POST['id'];
-        $old_pass = md5($_POST['old_pass']);
-        $new_pass = md5($_POST['new_pass']);
-        $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
-        $sql_update_client_pass = "UPDATE $tbl_client_info SET `password`='$new_pass' where id=$id;";
-        //echo $sql_update_client_pass;
-        $wpdb->query($sql_update_client_pass);
-        $_SESSION['client_login'] = 'false';
-        $_SESSION['client_username'] = '';
-        $_SESSION['client_id'] = '';
-        ?>
-        <script>
-            setTimeout(function () {
-                window.location.href = "<?php echo site_url()?>/user-dashboard/";
-            }, 3000);
-        </script>
-        <?php
-    }
+//    if (isset($_POST['chang_pass'])) {
+//        $id = $_POST['id'];
+//        $old_pass = md5($_POST['old_pass']);
+//        $new_pass = md5($_POST['new_pass']);
+//        $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
+//        $sql_update_client_pass = "UPDATE $tbl_client_info SET `password`='$new_pass' where id=$id;";
+//        //echo $sql_update_client_pass;
+//        $wpdb->query($sql_update_client_pass);
+//        $_SESSION['client_login'] = 'false';
+//        $_SESSION['client_username'] = '';
+//        $_SESSION['client_id'] = '';
 
 
-    if (isset($_POST['edit_new_clinet'])) {
-        $company = $_POST['company'];
-
-
-        $id = $_POST['id'];
-        $street = $_POST['street'];
-        $zip = $_POST['zip'];
-        $city = $_POST['city'];
-        $phone = $_POST['phone'];
-        $fax = $_POST['fax'];
-        $website = $_POST['website'];
-        $emergency_phone = $_POST['emergency_phone'];
-        $note = $_POST['note'];
-
-        $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
-        $sql_update_client_info = "UPDATE $tbl_client_info SET `company`='$company',  `street`='$street', `zip`='$zip', `city`='$city', `phone`='$phone', `fax`='$fax',  `website`='$website', `emergency_phone`='$emergency_phone',`note`='$note' where id=$id;";
-        $wpdb->query($sql_update_client_info);
-        ?>
-        <script>
-            setTimeout(function () {
-                window.location.href = "<?php echo admin_url();?>admin.php?page=wfd_truck_management";
-            }, 3000);
-        </script>
-        <?php
-    }
-    if (isset($_POST['edit_new_clinet_fn'])) {
-        $company = $_POST['company'];
-
-
-        $id = $_POST['id'];
-        $street = $_POST['street'];
-        $zip = $_POST['zip'];
-        $city = $_POST['city'];
-        $phone = $_POST['phone'];
-        $fax = $_POST['fax'];
-        $website = $_POST['website'];
-        $emergency_phone = $_POST['emergency_phone'];
-        $note = $_POST['note'];
-
-        $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
-        $sql_update_client_info = "UPDATE $tbl_client_info SET `company`='$company',  `street`='$street', `zip`='$zip', `city`='$city', `phone`='$phone', `fax`='$fax',  `website`='$website', `emergency_phone`='$emergency_phone',`note`='$note' where id=$id;";
-        $wpdb->query($sql_update_client_info);
-    }
+//    if (isset($_POST['edit_new_clinet'])) {
+//        $company = $_POST['company'];
+//
+//
+//        $id = $_POST['id'];
+//        $street = $_POST['street'];
+//        $zip = $_POST['zip'];
+//        $city = $_POST['city'];
+//        $phone = $_POST['phone'];
+//        $fax = $_POST['fax'];
+//        $website = $_POST['website'];
+//        $emergency_phone = $_POST['emergency_phone'];
+//        $note = $_POST['note'];
+//
+//        $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
+//        $sql_update_client_info = "UPDATE $tbl_client_info SET `company`='$company',  `street`='$street', `zip`='$zip', `city`='$city', `phone`='$phone', `fax`='$fax',  `website`='$website', `emergency_phone`='$emergency_phone',`note`='$note' where id=$id;";
+//        $wpdb->query($sql_update_client_info);
+//    }
+//    if (isset($_POST['edit_new_clinet_fn'])) {
+//        $company = $_POST['company'];
+//
+//
+//        $id = $_POST['id'];
+//        $street = $_POST['street'];
+//        $zip = $_POST['zip'];
+//        $city = $_POST['city'];
+//        $phone = $_POST['phone'];
+//        $fax = $_POST['fax'];
+//        $website = $_POST['website'];
+//        $emergency_phone = $_POST['emergency_phone'];
+//        $note = $_POST['note'];
+//
+//        $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
+//        $sql_update_client_info = "UPDATE $tbl_client_info SET `company`='$company',  `street`='$street', `zip`='$zip', `city`='$city', `phone`='$phone', `fax`='$fax',  `website`='$website', `emergency_phone`='$emergency_phone',`note`='$note' where id=$id;";
+//        $wpdb->query($sql_update_client_info);
+//    }
     if (isset($_POST['client_login'])) {
         $username = $_POST['username'];
         $password = md5($_POST['password']);
@@ -1243,10 +1207,11 @@ function wfd_admin_view()
     $res_company_list = $wpdb->get_results("SELECT DISTINCT `company` FROM $tbl_client_info ORDER BY 'company'", OBJECT);
     $res_zip_list = $wpdb->get_results("SELECT DISTINCT `zip` FROM $tbl_client_info ORDER BY 'zip'", OBJECT);
     $res_city_list = $wpdb->get_results("SELECT DISTINCT `city` FROM $tbl_client_info ORDER BY 'city'", OBJECT);
-    if (count($res_client_list) == 0 || $res_client_info[0]->type == 1) {
+
+    if (count($res_client_list) == 0 || $res_client_info[0]->type == 0) {
         ?>
         <div role="tabpanel" class="tab-pane" id="client_list">
-            <div class="col-sm-9">
+            <div class="col-sm-12">
                 <h2><?php _e('Clients List', 'wfd_truck'); ?></h2>
                 <div class="row" style="margin-left: 0px;">
                     <div class="col-sm-3" style="padding-left: 0px;"><select
@@ -1285,6 +1250,15 @@ function wfd_admin_view()
                         </select></div>
                 </div>
                 <table class="table table-striped" data-toggle="table" id="clients-list">
+                    <colgroup>
+                        <col class="col-md-2">
+                        <col class="col-md-2">
+                        <col class="col-md-2">
+                        <col class="col-md-2">
+                        <col class="col-md-2">
+                        <col class="col-md-2">
+                        <col class="col-md-2">
+                    </colgroup>
                     <thead>
                     <tr>
                         <th data-field="company"
@@ -1311,15 +1285,14 @@ function wfd_admin_view()
                             <td><?php echo $client->phone ?></td>
                             <td><?php echo $client->note ?></td>
                             <td>
-                                <button type="button" class="btn btn-link btn-client-view"
-                                        data-client-id="<?php echo $client->id ?>"><?php _e('View', 'wfd_truck'); ?></button>
-                                ||
-                                <button type="button" class="btn btn-link btn-client-edit"
-                                        data-client-id="<?php echo $client->id ?>"><?php _e('Edit', 'wfd_truck'); ?></button>
-                                ||
-                                <button type="button" class="btn btn-link btn-client-delete"
-                                        data-client-id="<?php echo $client->id ?>"><?php _e('Delete', 'wfd_truck'); ?></button>
-
+                                <div class="btn-group-client">
+                                <button type="button" class="btn btn-primary btn-client-view btn-sm"
+                                        data-client-id="<?php echo $client->id ?>"><span class="glyphicon glyphicon-th-list"></button>
+                                <button type="button" class="btn btn-primary btn-client-edit btn-sm"
+                                        data-client-id="<?php echo $client->id ?>"><span class="glyphicon glyphicon-pencil"></button>
+                                <button type="button" class="btn btn-primary btn-client-delete btn-sm"
+                                        data-client-id="<?php echo $client->id ?>"><span class="glyphicon glyphicon-remove"></button>
+                                </div>
                             </td>
                         </tr>
                     <?php } ?>
@@ -1583,16 +1556,7 @@ function wfd_core_data_view($res_client_info)
                 </div>
                 <div class="row form-group">
                     <div class="col-sm-6">
-                        <button class="btn btn-primary" type="button" data-toggle="collapse"
-                                data-target="#collapseExample"
-                                aria-expanded="false" aria-controls="collapseExample"><span
-                                    class="glyphicon glyphicon-save"></span> <?php _e('Save', 'wfd_truck'); ?>
-                        </button>
-                    </div>
-                    <div class="col-sm-6">
-                        <button class="btn btn-primary" type="button" data-toggle="collapse"
-                                data-target="#collapseExample"
-                                aria-expanded="false" aria-controls="collapseExample"><span
+                        <button class="btn btn-primary" type="button"  data-toggle="button" id="edit-core-data-toggle"><span
                                     class="glyphicon glyphicon-pencil"></span> <?php _e('Edit', 'wfd_truck'); ?>
                         </button>
                     </div>
@@ -1607,6 +1571,12 @@ function wfd_core_data_view($res_client_info)
                 <div class="col-sm-12">
                     <h2><?php _e('Opening Hours', 'wfd_truck'); ?></h2>
                     <table class="table table-striped" data-toggle="table" id="opening-hours">
+                        <colgroup>
+                            <col class="col-md-2">
+                            <col class="col-md-3">
+                            <col class="col-md-3">
+                            <col class="col-md-3">
+                        </colgroup>
                         <thead>
                         <tr>
                             <th><?php _e('Location', 'wfd_truck'); ?></th>
@@ -1617,28 +1587,40 @@ function wfd_core_data_view($res_client_info)
                         </thead>
                         <tbody>
                         <tr>
-                            <td><?php _e('Office', 'wfd_truck') ?></td>
-                            <td><?php echo $res_operating_hours_off[0]->rdays_start . ' - ' . $res_operating_hours_off[0]->rdays_end ?></td>
-                            <td><?php echo $res_operating_hours_off[0]->weday_start . ' - ' . $res_operating_hours_off[0]->weday_end ?></td>
-                            <td><?php echo $res_operating_hours_off[0]->wday_start . ' - ' . $res_operating_hours_off[0]->wday_end ?></td>
+                            <td class="col-sm-2"><?php _e('Office', 'wfd_truck') ?></td>
+                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_off[0]->rdays_start?>"></div><div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_off[0]->rdays_end ?>"></div></div></td>
+                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_off[0]->weday_start?>"></div><div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_off[0]->weday_end ?>"></div></div></td>
+                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_off[0]->wday_start?>"></div><div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_off[0]->wday_end ?>"></div></div></td>
                         </tr>
                         <tr>
-                            <td><?php _e('Garage', 'wfd_truck') ?></td>
-                            <td><?php echo $res_operating_hours_gar[0]->rdays_start . ' - ' . $res_operating_hours_gar[0]->rdays_end ?></td>
-                            <td><?php echo $res_operating_hours_gar[0]->weday_start . ' - ' . $res_operating_hours_gar[0]->weday_end ?></td>
-                            <td><?php echo $res_operating_hours_gar[0]->wday_start . ' - ' . $res_operating_hours_gar[0]->wday_end ?></td>
+                            <td class="col-sm-2"><?php _e('Garage', 'wfd_truck') ?></td>
+                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_gar[0]->rdays_start?>"></div><div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_gar[0]->rdays_end ?>"></div></div></td>
+                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_gar[0]->weday_start?>"></div><div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_gar[0]->weday_end ?>"></div></div></td>
+                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_gar[0]->wday_start?>"></div><div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_gar[0]->wday_end ?>"></div></div></td>
                         </tr>
                         <tr>
                             <td><?php _e('Car rental', 'wfd_truck') ?></td>
-                            <td><?php echo $res_operating_hours_carrent[0]->rdays_start . ' - ' . $res_operating_hours_carrent[0]->rdays_end ?></td>
-                            <td><?php echo $res_operating_hours_carrent[0]->weday_start . ' - ' . $res_operating_hours_carrent[0]->weday_end ?></td>
-                            <td><?php echo $res_operating_hours_carrent[0]->wday_start . ' - ' . $res_operating_hours_carrent[0]->wday_end ?></td>
+                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_carrent[0]->rdays_start?>"></div><div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_carrent[0]->rdays_end ?>"></div></div></td>
+                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_carrent[0]->weday_start?>"></div><div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_carrent[0]->weday_end ?>"></div></div></td>
+                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_carrent[0]->wday_start?>"></div><div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_carrent[0]->wday_end ?>"></div></div></td>
                         </tr>
                         <tr>
                             <td><?php _e('on-call duty', 'wfd_truck') ?></td>
-                            <td><?php echo $res_operating_hours_oncall[0]->rdays_start . ' - ' . $res_operating_hours_oncall[0]->rdays_end ?></td>
-                            <td><?php echo $res_operating_hours_oncall[0]->weday_start . ' - ' . $res_operating_hours_oncall[0]->weday_end ?></td>
-                            <td><?php echo $res_operating_hours_oncall[0]->wday_start . ' - ' . $res_operating_hours_oncall[0]->wday_end ?></td>
+                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_oncall[0]->rdays_start?>"></div><div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_oncall[0]->rdays_end ?>"></div></div></td>
+                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_oncall[0]->weday_start?>"></div><div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_oncall[0]->weday_end ?>"></div></div></td>
+                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_oncall[0]->wday_start?>"></div><div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_oncall[0]->wday_end ?>"></div></div></td>
                         </tr>
 
                         </tbody>
@@ -1708,7 +1690,7 @@ function wfd_core_data_view($res_client_info)
                                 </label>
                             </div>
                         <?php } ?>
-                        <button class="btn btn-primary" type="button"><span
+                        <button class="btn btn-primary" type="button" id="add-assistance"><span
                                     class="glyphicon glyphicon-plus"></span> <?php _e('add', 'wfd_truck'); ?></button>
                     </ul>
                 </div>
@@ -1748,7 +1730,7 @@ function wfd_core_data_view($res_client_info)
                         }
                         ?>
                     </div>
-                    <button class="btn btn-primary" type="button"><span
+                    <button class="btn btn-primary" type="button" id="add-mobi-service"><span
                                 class="glyphicon glyphicon-plus"></span> <?php _e('add', 'wfd_truck'); ?></button>
 
                 </div>
@@ -4179,7 +4161,10 @@ function wfd_truck_user_dashboard_fn()
     <div class="container">
 
         <?php
+        global $wpdb;
 
+        $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
+        $res_client_list = $wpdb->get_results("select * from $tbl_client_info", OBJECT);
         // print_r($_SESSION);
 
         if (isset($_GET['act']) && $_GET['act'] == 'logout') {
@@ -4196,23 +4181,26 @@ function wfd_truck_user_dashboard_fn()
             <?php
         }
 
-        if ($_SESSION['client_login'] != 'true') {
+        if ($_SESSION['client_login'] != 'true' && count($res_client_list) > 0) {
             ?>
 
             <div class="row">
-                <div class="col-sm-4 col-sm-offset-4">
+                <div class="col-sm-3 col-sm-offset-2 well">
                     <form method="POST">
+                        <div class="form-group">
                         <label><b><?php _e('Username', 'wfd_truck'); ?></b></label>
                         <input type="text" placeholder="Enter Username" name="username" required
                                class="form-control">
-
+                        </div>
+                        <div class="form-group">
                         <label><b><?php _e('Password', 'wfd_truck'); ?></b></label>
                         <input type="password" placeholder="Enter Password" name="password" required
                                class="form-control">
-
-                        <input type="submit" class="btn btn-lg btn-default"
-                               value="<?php _e('Login', 'wfd_truck'); ?>"
-                               name="client_login">
+                        </div>
+                        <div class="form-group">
+                        <button type="submit" class="btn btn-primary" value="<?php _e('Login', 'wfd_truck'); ?>"
+                                name="client_login"><span class="glyphicon glyphicon-ok"></span> <?php _e('Login', 'wfd_truck'); ?></button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -4230,7 +4218,9 @@ function wfd_truck_user_dashboard_fn()
                 }
             </style>
             <?php
-        } else {
+        }
+        else
+            {
             ?>
             <div class="row">
                 <div class="col-sm-12 nav navbar-inverse">
@@ -4277,32 +4267,16 @@ function wfd_truck_user_dashboard_fn()
                 </div>
                 <div class="col-sm-12">
                     <?php if ($_GET['action'] == 'profile') {
-                        global $wpdb;
                         $id = $_SESSION['client_id'];
 
-                        $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
-                        $res_client_list = $wpdb->get_results("select * from $tbl_client_info", OBJECT);
                         $res_client_info = $wpdb->get_results("select * from $tbl_client_info where id=$id", OBJECT);
 
-
-                        // echo "select * from $tbl_driver_info where cid=$id and type='Driver'";
-                        //wp_wfd_truck_truck_truck_info
-                        //echo "select * from $tbl_call_num where cid=$id";
-
-
                         ?>
-
-                        <link rel="stylesheet" href="<?php echo plugin_dir_url(__FILE__) ?>css/bootstrap.min.css">
-                        <link rel="stylesheet" href="<?php echo plugin_dir_url(__FILE__) ?>css/bootstrap-theme.min.css">
-                        <!--<link rel="stylesheet" href="<?php echo plugin_dir_url(__FILE__) ?>css/jquery.dataTables.min.css">-->
-
-                        <!--<script src="<?php echo plugin_dir_url(__FILE__) ?>js/jquery.dataTables.min.js"></script>-->
-                        <!--<script src="<?php echo plugin_dir_url(__FILE__) ?>js/bootstrap.min.js"></script>-->
 
                         <br>
                         <ul class="nav nav-tabs" role="tablist">
                             <?php
-                            if (count($res_client_list) == 0 || $res_client_info[0]->type == 1) {
+                            if (count($res_client_list) == 0 || $res_client_info[0]->type == 0) {
                                 ?>
                                 <li role="presentation"><a href="#client_list" aria-controls="Clients List" role="tab"
                                                            data-toggle="tab"><?php _e('Clients List', 'wfd_truck'); ?></a>

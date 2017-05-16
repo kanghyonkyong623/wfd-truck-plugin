@@ -75,11 +75,9 @@ $(document).ready(function ($) {
                 new_email_address: new_email_address,
                 new_password: new_password
             };
-            $.ajax({
-                url: ajax_object.ajax_url,
-                type: 'POST',
-                data: data,
-                success: function (response) {
+            $.post(ajax_object.ajax_url,
+                data,
+                function (response) {
                     if (response.result != true) {
                         ezBSAlert({
                             messageText: response.errorMessage,
@@ -91,23 +89,29 @@ $(document).ready(function ($) {
                         });
                     } else {
                         ezBSAlert({
-                            messageText: ajax_object.successMessage,
+                            messageText: response.message,
                             alertType: "success",
-                            headerText: response.message,
+                            headerText: ajax_object.successTitle,
                             okButtonText: ajax_object.okText
                         }).done(function (e) {
                             $('#add_client').modal('hide');
-                            var newRow = $('<tr  data-userid="' + response.clientId + '">');
+                            var clientsTable = $('#clients-list');
+                            var newRow = $('<tr  data-user-id="' + response.clientId + '">');
                             var cols = "";
 
                             cols += '<td>' + new_company_name + '</td>';
                             cols += '<td/><td/><td/><td/><td/>';
-                            newRow.append(cols);
 
-                            var clientsTable = $('#clients-list');
-                            var actionTd = $('<td>', clientsTable)[0];
-                            newRow.append(actionTd);
+                            var actionsContent = $('.btn-group-client').html();
+                            cols += '<td>' + actionsContent + '</td>';
+
+                            newRow.append(cols);
+                            $('button[data-client-id]', newRow).data('clientId', response.clientId);
+
                             clientsTable.append(newRow);
+
+                            $('#new_company').val(data.new_company_name);
+                            attachClientActions();
 
                             $('#add_client_info').data('clientId', response.clientId);
                             $('#add_client_info').modal('show')
@@ -115,7 +119,7 @@ $(document).ready(function ($) {
                         });
                     }
                 },
-                error: function (response) {
+                'json').fail(function (response) {
                     ezBSAlert({
                         messageText: response.errorMessage,
                         alertType: "danger",
@@ -124,10 +128,7 @@ $(document).ready(function ($) {
                     }).done(function (e) {
                         // $("body").append('<div>Callback from alert</div>');
                     });
-                },
-                dataType: 'json'
-            });
-
+                });
         }
     });
 
@@ -200,62 +201,66 @@ $(document).ready(function ($) {
         }
     });
 
-    $('.btn-client-view').click(function (e) {
-        setValuesToDialog(this);
-        $('#add_clinet_core').prop('disabled', true);
-        $('#add_client_info').modal('show');
-    });
+    attachClientActions();
 
-    $('.btn-client-edit').click(function (e) {
-        setValuesToDialog(this);
-        $('#add_clinet_core').prop('disabled', false);
-        $('#add_client_info').modal('show');
-    });
-
-    $('.btn-client-delete').click(function (e) {
-        var clientId = $(this).data('clientId');
-        ezBSAlert({
-            type: "confirm",
-            messageText: ajax_object.deleteConformMessage,
-            alertType: "info"
-        }).done(function (e) {
-            if (e == true) {
-                $.post(
-                    ajax_object.ajax_url,
-                    {
-                        action: 'wfd_delete_client',
-                        clientId: clientId
-                    },
-                    function (response) {
-                        if (response.result == true) {
-                            ezBSAlert({
-                                messageText: response.message,
-                                alertType: "success",
-                                headerText: ajax_object.successTitle,
-                                okButtonText: ajax_object.okText
-                            }).done(function (e) {
-                                $('tr[data-user-id="' + clientId + '"]').remove();
-                            });
-                        }
-                        else {
-                            ezBSAlert({
-                                messageText: response.errorMessage,
-                                alertType: "danger",
-                                headerText: ajax_object.alertTitle,
-                                okButtonText: ajax_object.okText
-                            }).done(function (e) {
-                                // $("body").append('<div>Callback from alert</div>');
-                            });
-                        }
-                    },
-                    'json'
-                )
-                    .fail(function (response) {
-                        alert('Error: ' + response.responseText);
-                    });
-            }
+    function attachClientActions(){
+        $('.btn-client-view').click(function (e) {
+            setValuesToDialog(this);
+            $('#add_clinet_core').prop('disabled', true);
+            $('#add_client_info').modal('show');
         });
-    });
+
+        $('.btn-client-edit').click(function (e) {
+            setValuesToDialog(this);
+            $('#add_clinet_core').prop('disabled', false);
+            $('#add_client_info').modal('show');
+        });
+
+        $('.btn-client-delete').click(function (e) {
+            var clientId = $(this).data('clientId');
+            ezBSAlert({
+                type: "confirm",
+                messageText: ajax_object.deleteConformMessage,
+                alertType: "info"
+            }).done(function (e) {
+                if (e == true) {
+                    $.post(
+                        ajax_object.ajax_url,
+                        {
+                            action: 'wfd_delete_client',
+                            clientId: clientId
+                        },
+                        function (response) {
+                            if (response.result == true) {
+                                ezBSAlert({
+                                    messageText: response.message,
+                                    alertType: "success",
+                                    headerText: ajax_object.successTitle,
+                                    okButtonText: ajax_object.okText
+                                }).done(function (e) {
+                                    $('tr[data-user-id="' + clientId + '"]').remove();
+                                });
+                            }
+                            else {
+                                ezBSAlert({
+                                    messageText: response.errorMessage,
+                                    alertType: "danger",
+                                    headerText: ajax_object.alertTitle,
+                                    okButtonText: ajax_object.okText
+                                }).done(function (e) {
+                                    // $("body").append('<div>Callback from alert</div>');
+                                });
+                            }
+                        },
+                        'json'
+                    )
+                        .fail(function (response) {
+                            alert('Error: ' + response.responseText);
+                        });
+                }
+            });
+        });
+    }
 
     function setValuesToDialog(buttonElem) {
         var clientId = $(buttonElem).data('clientId');
@@ -372,6 +377,37 @@ $(document).ready(function ($) {
         $('#filter-company').selectpicker('refresh');
         filterByText(selected, $('#clients-list'), 3);
     });
+
+    $('#edit-core-data-toggle').click(function (e) {
+        if($(this).attr("class").includes("active") == true) {
+            ezBSAlert({
+                type: "confirm",
+                messageText: ajax_object.saveConformMessage,
+                alertType: "info"
+            }).done(function (e) {
+                if(e != ""){
+                    if (e == true) {
+                    }
+                    else{
+
+                    }
+                }
+            });
+            $(this).addClass('btn-primary').removeClass('btn-save').html('<span class="glyphicon glyphicon-pencil"></span> Edit');
+            activateCoreDataEdit(false);
+        }
+        else {
+            $(this).addClass('btn-save').removeClass('btn-primary').html('<span class="glyphicon glyphicon-save"></span> End Edit');
+            activateCoreDataEdit(true);
+        }
+    });
+
+    activateCoreDataEdit(false);
+    function activateCoreDataEdit(active){
+            $('input', $('#core')).prop('disabled', !active);
+            $('#add-assistance').prop('disabled', !active);
+            $('#add-mobi-service').prop('disabled', !active);
+    }
 
     function filterByText(text, table, col) {
         var trArray = $('tr', table);

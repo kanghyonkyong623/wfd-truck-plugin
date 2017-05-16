@@ -55,16 +55,16 @@ display: none;
     padding-top: 8px;
 }
 
-#filter-company + div{
-    max-width: 160px;
-}
-#filter-zip + div{
-    max-width: 100px;
-    margin-left: 10px;
-}
-#filter-city + div{
-    max-width: 160px;
-}
+/*#filter-company + div{*/
+    /*max-width: 160px;*/
+/*}*/
+/*#filter-zip + div{*/
+    /*max-width: 100px;*/
+    /*margin-left: 10px;*/
+/*}*/
+/*#filter-city + div{*/
+    /*max-width: 160px;*/
+/*}*/
 
 .tab-pane{
     margin-top: 10px;
@@ -212,4 +212,22 @@ input:checked + .slider:before {
     margin-bottom: 0px !important;
     padding-left: 0px;
     height: 28px;
+}
+.btn-save{
+    background: darkolivegreen !important;
+    color: whitesmoke !important;
+}
+.time-input{
+    padding-left:0px;
+    padding-right:0px;
+}
+.time-input>input{
+    height:26px;
+    padding:0px;
+    text-align:center;
+}
+input[type=time]::-webkit-inner-spin-button,
+input[type=time]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
