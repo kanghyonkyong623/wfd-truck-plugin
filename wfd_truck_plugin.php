@@ -12,8 +12,8 @@ add_action('admin_menu', 'wfd_truck_ltd_admin_menu_fn');
 
 function wfd_truck_ltd_admin_menu_fn()
 {
-    add_menu_page('WFD Truck Management', 'Company Info', 'manage_options', 'wfd_truck_management', 'wfd_truck_management_fn');
-    add_submenu_page('wfd_truck_management', 'Settings', 'Settings', 'manage_options', 'wfd_truck_settings', 'wfd_truck_settings_fn');
+    add_menu_page('WFD Truck Management', 'Truck Admin', 'manage_options', 'wfd_truck_admin_view', 'wfd_admin_view_as_wp_menu');
+    add_submenu_page('wfd_truck_admin_view', 'Settings', 'Settings', 'manage_options', 'wfd_truck_settings', 'wfd_truck_settings_fn');
 }
 
 add_action('plugins_loaded', 'plugin_init');
@@ -53,7 +53,8 @@ function my_enqueue()
         array('ajax_url' => admin_url('admin-ajax.php'), 'fillFormMessage' => __('Please fill all of the fields!', 'wfd_truck'),
             'alertTitle' => __('Alert', 'wfd_truck'), 'okText' => __('OK', 'wfd_truck'),
             'successTitle' => __('Succeed', 'wfd_truck'), 'deleteConformMessage' => __('Do you confirm to delete?', 'wfd_truck'),
-            'saveConformMessage'=>__('Do you want to save changes of core data?', 'wfd_truck')));
+            'saveConformMessage' => __('Do you want to save changes of core data?', 'wfd_truck'), 'coreDataEditMode' => $_SESSION['edit_mode'],
+            'enterNewAssistanceMessage'=>__('Please enter assistance type', 'wfd_truck')));
 }
 
 add_action('wp_ajax_wfd_add_client', 'wfd_add_client');
@@ -709,7 +710,7 @@ function wfd_truck_init_fn()
 {
     session_start();
     global $wpdb;
-
+    $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
 
 //    if (isset($_POST['save_ranking'])) {
 //        $rank_item = $_POST['rank_item'];
@@ -725,7 +726,6 @@ function wfd_truck_init_fn()
 //        $wpdb->query($sql);
 //
 //    }
-
 //    if (isset($_POST['save_license'])) {
 //        $licenses = $_POST['licenses'];
 //        $tbl_driver_licences = $wpdb->prefix . "wfd_truck_driver_licences";
@@ -752,7 +752,6 @@ function wfd_truck_init_fn()
 //        $sql = "UPDATE $tbl_driver_qualification set qualification='$qualification' where id=$id";
 //        $wpdb->query($sql);
 //    }
-
 //    if (isset($_POST['add_new_clinet'])) {
 //        $company = $_POST['company'];
 //        $email = $_POST['email'];
@@ -773,8 +772,6 @@ function wfd_truck_init_fn()
 //        //echo $sql_ins_client_info;
 //        $wpdb->query($sql_ins_client_info);
 //    }
-
-
 //    if (isset($_POST['chang_pass'])) {
 //        $id = $_POST['id'];
 //        $old_pass = md5($_POST['old_pass']);
@@ -786,8 +783,6 @@ function wfd_truck_init_fn()
 //        $_SESSION['client_login'] = 'false';
 //        $_SESSION['client_username'] = '';
 //        $_SESSION['client_id'] = '';
-
-
 //    if (isset($_POST['edit_new_clinet'])) {
 //        $company = $_POST['company'];
 //
@@ -824,19 +819,33 @@ function wfd_truck_init_fn()
 //        $sql_update_client_info = "UPDATE $tbl_client_info SET `company`='$company',  `street`='$street', `zip`='$zip', `city`='$city', `phone`='$phone', `fax`='$fax',  `website`='$website', `emergency_phone`='$emergency_phone',`note`='$note' where id=$id;";
 //        $wpdb->query($sql_update_client_info);
 //    }
+
     if (isset($_POST['client_login'])) {
         $username = $_POST['username'];
         $password = md5($_POST['password']);
-        $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
         $res_client_info = $wpdb->get_results("select * from $tbl_client_info where username='$username' and password='$password' limit 1", OBJECT);
 
         if (count($res_client_info) != 0) {
             $_SESSION['client_login'] = 'true';
-            $_SESSION['client_username'] = $res_client_info[0]->company;
+            $_SESSION['client_username'] = $res_client_info[0]->username;
             $_SESSION['client_id'] = $res_client_info[0]->id;
             $_GET['action'] = 'profile';
         }
     }
+
+    if(isset($_POST['admin'])){
+        $clientId = $_POST['client_id'];
+        $editMode = $_POST['edit_mode'];
+        $res_client_info = $wpdb->get_results("select * from $tbl_client_info where id='$clientId'", OBJECT);
+        if (count($res_client_info) != 0) {
+            $_SESSION['client_login'] = 'true';
+            $_SESSION['client_username'] = $res_client_info[0]->username;
+            $_SESSION['client_id'] = $res_client_info[0]->id;
+            $_SESSION['edit_mode'] = $editMode;
+            $_GET['action'] = 'profile';
+        }
+    }
+
     if (isset($_POST['drive_save'])) {
         $tbl_ranking = $wpdb->prefix . "wfd_truck_driver_ranking";
         $res_ranking = $wpdb->get_results("select * from $tbl_ranking order by id");
@@ -1197,6 +1206,213 @@ function wfd_check_email_fn()
 
 add_shortcode('wfd_truck_user_dashboard', 'wfd_truck_user_dashboard_fn');
 
+function wfd_admin_view_as_wp_menu()
+{
+    global $wpdb;
+    $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
+    $res_client_list = $wpdb->get_results("select * from $tbl_client_info", OBJECT);
+    $res_company_list = $wpdb->get_results("SELECT DISTINCT `company` FROM $tbl_client_info ORDER BY 'company'", OBJECT);
+    $res_zip_list = $wpdb->get_results("SELECT DISTINCT `zip` FROM $tbl_client_info ORDER BY 'zip'", OBJECT);
+    $res_city_list = $wpdb->get_results("SELECT DISTINCT `city` FROM $tbl_client_info ORDER BY 'city'", OBJECT);
+
+    my_enqueue();
+    ?>
+    <div role="tabpanel" class="tab-pane" id="client_list">
+        <div class="col-sm-12">
+            <h2><?php _e('Clients List', 'wfd_truck'); ?></h2>
+            <div class="row" style="margin-left: 0px;">
+                <div class="col-sm-1" style="padding-left: 0px;">
+                    <input id="filter-company" placeholder="<?php _e('filter company', 'wfd_truck') ?>">
+                </div>
+
+                <div class="col-sm-1 col-sm-offset-3">
+                    <input id="filter-zip" placeholder="<?php _e('filter ZIP', 'wfd_truck') ?>">
+                </div>
+                <div class="col-sm-1 col-sm-offset-1">
+                    <input id="filter-city" placeholder="<?php _e('filter city', 'wfd_truck') ?>">
+                </div>
+            </div>
+            <table class="table table-striped" data-toggle="table" id="clients-list">
+                <colgroup>
+                    <col class="col-md-1">
+                    <col class="col-md-1">
+                    <col class="col-md-1">
+                    <col class="col-md-1">
+                    <col class="col-md-1">
+                    <col class="col-md-1">
+                    <col class="col-md-1">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th data-field="company"
+                        data-sortable="true"><?php _e('Company', 'wfd_truck'); ?></th>
+                    <th data-field="street"><?php _e('Street', 'wfd_truck'); ?></th>
+                    <th data-field="zip"
+                        data-sortable="true"><?php _e('Zip', 'wfd_truck'); ?></th>
+                    <th data-field="city"
+                        data-sortable="true"><?php _e('City', 'wfd_truck'); ?></th>
+                    <th><?php _e('Phone', 'wfd_truck'); ?></th>
+                    <th><?php _e('Note', 'wfd_truck'); ?></th>
+                    <th><?php _e('Action', 'wfd_truck'); ?></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php
+
+                foreach ($res_client_list as $client) { ?>
+                    <tr data-user-id="<?php echo $client->id ?>">
+                        <td><?php echo $client->company ?></td>
+                        <td><?php echo $client->street ?></td>
+                        <td><?php echo $client->zip ?></td>
+                        <td><?php echo $client->city ?></td>
+                        <td><?php echo $client->phone ?></td>
+                        <td><?php echo $client->note ?></td>
+                        <td>
+                            <div class="btn-group-client">
+                                <button type="button" class="btn btn-primary btn-client-view btn-sm"
+                                        data-client-id="<?php echo $client->id ?>"><span
+                                            class="glyphicon glyphicon-th-list"></button>
+                                <button type="button" class="btn btn-primary btn-client-edit btn-sm"
+                                        data-client-id="<?php echo $client->id ?>"><span
+                                            class="glyphicon glyphicon-pencil"></button>
+                                <button type="button" class="btn btn-primary btn-client-delete btn-sm"
+                                        data-client-id="<?php echo $client->id ?>"><span
+                                            class="glyphicon glyphicon-remove"></button>
+                            </div>
+                        </td>
+                    </tr>
+                <?php } ?>
+                </tbody>
+            </table>
+            <button type="button"
+                    class="btn btn-primary" data-toggle="modal" data-target="#add_client">
+                <span class="glyphicon glyphicon-user"></span><span
+                        class="glyphicon glyphicon-plus"></span><?php _e('add Client', 'wfd_truck'); ?>
+            </button>
+        </div>
+        <div class="modal fade" id="add_client"
+             tabindex="-1"
+             role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+
+                <form method="post">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                                    data-dismiss="modal"
+                                    aria-label="Close"><span
+                                        aria-hidden="true">&times;</span>
+                            </button>
+                            <h4 class="modal-title"><?php _e('New Client', 'wfd_truck'); ?></h4>
+                        </div>
+                        <div class="well">
+                            <div class="container-fluid">
+                                <div class="row form-group">
+                                    <div class="col-sm-4">
+                                        <label><?php _e('Company Name', 'wfd_truck') ?></label>
+                                    </div>
+                                    <div class="col-sm-4"><input class="form-control"
+                                                                 id="new_company_name">
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-4">
+                                        <label><?php _e('User Name', 'wfd_truck') ?></label>
+                                    </div>
+                                    <div class="col-sm-4"><input class="form-control"
+                                                                 id="new_user_name">
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-4">
+                                        <label for="new_email_address"><?php _e('Email', 'wfd_truck') ?></label>
+                                    </div>
+                                    <div class="col-sm-4"><input class="form-control" type="email"
+                                                                 id="new_email_address" name="email_name">
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-4">
+                                        <label><?php _e('Password', 'wfd_truck') ?></label>
+                                    </div>
+                                    <div class="col-sm-4"><input class="form-control"
+                                                                 id="new_password">
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <button type="button" class="btn btn-primary" id="generate_pw">
+                                            <span class="glyphicon glyphicon-pencil"></span>
+                                            <?php _e('Generate', 'wfd_truck'); ?>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="modal-footer form-group">
+                            <button type="button" class="btn btn-primary"
+                                    id="add_new_clinet"><span
+                                        class="glyphicon glyphicon-save-file"></span> <?php _e('Save', 'wfd_truck'); ?>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+        <div class="modal fade" id="modal_nav_client" tabindex="-1"
+             role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close"
+                                data-dismiss="modal"
+                                aria-label="Close"><span
+                                    aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title"><?php _e('Client Core Data', 'wfd_truck'); ?></h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="col-sm-6"><?php _e('Please select client page', 'wfd_truck') ?></label>
+                            <div class="col-sm-6">
+                                <select name="page-dropdown" id="select-client-page">
+                                    <option value="">
+                                        <?php echo esc_attr(__('Select page')); ?></option>
+                                    <?php
+                                    $pages = get_pages();
+                                    foreach ($pages as $page) {
+                                        $option = '<option value="' . get_page_link($page->ID) . '">';
+                                        $option .= $page->post_title;
+                                        $option .= '</option>';
+                                        echo $option;
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <form method="post" id="form-navigate-client-view">
+                        <input hidden name="admin" value="true">
+                        <input hidden name="client_id" value="">
+                        <input hidden name="edit_mode" value="false">
+                        <div class="modal-footer form-group">
+                            <button type="submit" class="btn btn-primary" disabled
+                                    id="navigate_client_view"><span
+                                        class="glyphicon glyphicon-new-window"></span> <?php _e('Go to Client View', 'wfd_truck'); ?>
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+            <!--                </form>-->
+
+        </div>
+    </div>
+
+    <?php
+}
+
 function wfd_admin_view()
 {
     global $wpdb;
@@ -1286,12 +1502,15 @@ function wfd_admin_view()
                             <td><?php echo $client->note ?></td>
                             <td>
                                 <div class="btn-group-client">
-                                <button type="button" class="btn btn-primary btn-client-view btn-sm"
-                                        data-client-id="<?php echo $client->id ?>"><span class="glyphicon glyphicon-th-list"></button>
-                                <button type="button" class="btn btn-primary btn-client-edit btn-sm"
-                                        data-client-id="<?php echo $client->id ?>"><span class="glyphicon glyphicon-pencil"></button>
-                                <button type="button" class="btn btn-primary btn-client-delete btn-sm"
-                                        data-client-id="<?php echo $client->id ?>"><span class="glyphicon glyphicon-remove"></button>
+                                    <button type="button" class="btn btn-primary btn-client-view btn-sm"
+                                            data-client-id="<?php echo $client->id ?>"><span
+                                                class="glyphicon glyphicon-th-list"></button>
+                                    <button type="button" class="btn btn-primary btn-client-edit btn-sm"
+                                            data-client-id="<?php echo $client->id ?>"><span
+                                                class="glyphicon glyphicon-pencil"></button>
+                                    <button type="button" class="btn btn-primary btn-client-delete btn-sm"
+                                            data-client-id="<?php echo $client->id ?>"><span
+                                                class="glyphicon glyphicon-remove"></button>
                                 </div>
                             </td>
                         </tr>
@@ -1556,7 +1775,8 @@ function wfd_core_data_view($res_client_info)
                 </div>
                 <div class="row form-group">
                     <div class="col-sm-6">
-                        <button class="btn btn-primary" type="button"  data-toggle="button" id="edit-core-data-toggle"><span
+                        <button class="btn btn-primary" type="button" data-toggle="button"
+                                id="edit-core-data-toggle"><span
                                     class="glyphicon glyphicon-pencil"></span> <?php _e('Edit', 'wfd_truck'); ?>
                         </button>
                     </div>
@@ -1588,39 +1808,147 @@ function wfd_core_data_view($res_client_info)
                         <tbody>
                         <tr>
                             <td class="col-sm-2"><?php _e('Office', 'wfd_truck') ?></td>
-                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_off[0]->rdays_start?>"></div><div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_off[0]->rdays_end ?>"></div></div></td>
-                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_off[0]->weday_start?>"></div><div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_off[0]->weday_end ?>"></div></div></td>
-                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_off[0]->wday_start?>"></div><div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_off[0]->wday_end ?>"></div></div></td>
+                            <td>
+                                <div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_off[0]->rdays_start ?>">
+                                    </div>
+                                    <div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_off[0]->rdays_end ?>">
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_off[0]->weday_start ?>">
+                                    </div>
+                                    <div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_off[0]->weday_end ?>">
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_off[0]->wday_start ?>">
+                                    </div>
+                                    <div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_off[0]->wday_end ?>">
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                         <tr>
                             <td class="col-sm-2"><?php _e('Garage', 'wfd_truck') ?></td>
-                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_gar[0]->rdays_start?>"></div><div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_gar[0]->rdays_end ?>"></div></div></td>
-                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_gar[0]->weday_start?>"></div><div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_gar[0]->weday_end ?>"></div></div></td>
-                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_gar[0]->wday_start?>"></div><div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_gar[0]->wday_end ?>"></div></div></td>
+                            <td>
+                                <div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_gar[0]->rdays_start ?>">
+                                    </div>
+                                    <div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_gar[0]->rdays_end ?>">
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_gar[0]->weday_start ?>">
+                                    </div>
+                                    <div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_gar[0]->weday_end ?>">
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_gar[0]->wday_start ?>">
+                                    </div>
+                                    <div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_gar[0]->wday_end ?>">
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                         <tr>
                             <td><?php _e('Car rental', 'wfd_truck') ?></td>
-                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_carrent[0]->rdays_start?>"></div><div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_carrent[0]->rdays_end ?>"></div></div></td>
-                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_carrent[0]->weday_start?>"></div><div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_carrent[0]->weday_end ?>"></div></div></td>
-                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_carrent[0]->wday_start?>"></div><div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_carrent[0]->wday_end ?>"></div></div></td>
+                            <td>
+                                <div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_carrent[0]->rdays_start ?>">
+                                    </div>
+                                    <div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_carrent[0]->rdays_end ?>">
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_carrent[0]->weday_start ?>">
+                                    </div>
+                                    <div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_carrent[0]->weday_end ?>">
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_carrent[0]->wday_start ?>">
+                                    </div>
+                                    <div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_carrent[0]->wday_end ?>">
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                         <tr>
                             <td><?php _e('on-call duty', 'wfd_truck') ?></td>
-                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_oncall[0]->rdays_start?>"></div><div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_oncall[0]->rdays_end ?>"></div></div></td>
-                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_oncall[0]->weday_start?>"></div><div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_oncall[0]->weday_end ?>"></div></div></td>
-                            <td><div><div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_oncall[0]->wday_start?>"></div><div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time" value="<?php echo $res_operating_hours_oncall[0]->wday_end ?>"></div></div></td>
+                            <td>
+                                <div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_oncall[0]->rdays_start ?>">
+                                    </div>
+                                    <div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_oncall[0]->rdays_end ?>">
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_oncall[0]->weday_start ?>">
+                                    </div>
+                                    <div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_oncall[0]->weday_end ?>">
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_oncall[0]->wday_start ?>">
+                                    </div>
+                                    <div class="col-sm-1">-</div>
+                                    <div class="col-sm-5 time-input"><input type="time"
+                                                                            value="<?php echo $res_operating_hours_oncall[0]->wday_end ?>">
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
 
                         </tbody>
@@ -1673,7 +2001,7 @@ function wfd_core_data_view($res_client_info)
                 </div>
                 <div class="col-sm-3">
                     <h3><?php _e('Assistance', 'wfd_truck'); ?></h3>
-                    <ul class="nav" style="padding-left: 0; margin-left: 0">
+                    <div class="nav" id="assistance-container" style="padding-left: 0; margin-left: 0">
                         <?php
 
                         foreach ($res_assistance as $pa) { ?>
@@ -1690,13 +2018,13 @@ function wfd_core_data_view($res_client_info)
                                 </label>
                             </div>
                         <?php } ?>
-                        <button class="btn btn-primary" type="button" id="add-assistance"><span
-                                    class="glyphicon glyphicon-plus"></span> <?php _e('add', 'wfd_truck'); ?></button>
-                    </ul>
+                    </div>
+                    <button class="btn btn-primary" type="button" id="add-assistance"><span
+                                class="glyphicon glyphicon-plus"></span> <?php _e('add', 'wfd_truck'); ?></button>
                 </div>
                 <div class="col-sm-3">
                     <h3><?php _e('Mobi Services', 'wfd_truck'); ?></h3>
-                    <div class="container-fluid" style="padding-left: 0; margin-left: 0">
+                    <div class="container-fluid" id="mobi-service-container" style="padding-left: 0; margin-left: 0">
                         <?php
                         $count = 3;
                         foreach ($res_mobi_service as $ms) {
@@ -4188,18 +4516,20 @@ function wfd_truck_user_dashboard_fn()
                 <div class="col-sm-3 col-sm-offset-2 well">
                     <form method="POST">
                         <div class="form-group">
-                        <label><b><?php _e('Username', 'wfd_truck'); ?></b></label>
-                        <input type="text" placeholder="Enter Username" name="username" required
-                               class="form-control">
+                            <label><b><?php _e('Username', 'wfd_truck'); ?></b></label>
+                            <input type="text" placeholder="Enter Username" name="username" required
+                                   class="form-control">
                         </div>
                         <div class="form-group">
-                        <label><b><?php _e('Password', 'wfd_truck'); ?></b></label>
-                        <input type="password" placeholder="Enter Password" name="password" required
-                               class="form-control">
+                            <label><b><?php _e('Password', 'wfd_truck'); ?></b></label>
+                            <input type="password" placeholder="Enter Password" name="password" required
+                                   class="form-control">
                         </div>
                         <div class="form-group">
-                        <button type="submit" class="btn btn-primary" value="<?php _e('Login', 'wfd_truck'); ?>"
-                                name="client_login"><span class="glyphicon glyphicon-ok"></span> <?php _e('Login', 'wfd_truck'); ?></button>
+                            <button type="submit" class="btn btn-primary" value="<?php _e('Login', 'wfd_truck'); ?>"
+                                    name="client_login"><span
+                                        class="glyphicon glyphicon-ok"></span> <?php _e('Login', 'wfd_truck'); ?>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -4218,9 +4548,7 @@ function wfd_truck_user_dashboard_fn()
                 }
             </style>
             <?php
-        }
-        else
-            {
+        } else {
             ?>
             <div class="row">
                 <div class="col-sm-12 nav navbar-inverse">
@@ -4228,7 +4556,7 @@ function wfd_truck_user_dashboard_fn()
                     <div class="col-sm-9">
                         <ul class="pull-right nav  navbar-nav">
                             <li>
-                                <a href=""><?php _e('Welcome', 'wfd_truck'); ?><?php echo $_SESSION['client_username'] ?></a>
+                                <a href=""><?php _e('Welcome', 'wfd_truck'); ?> <?php echo $_SESSION['client_username'] ?></a>
                             </li>
                             <li><a href="?act=logout"><?php _e('Logout', 'wfd_truck'); ?></a></li>
                         </ul>
