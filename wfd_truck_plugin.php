@@ -59,6 +59,8 @@ function my_enqueue()
 
 add_action('wp_ajax_wfd_add_client', 'wfd_add_client');
 add_action('wp_ajax_nopriv_wfd_add_client', 'wfd_add_client');
+add_action('wp_ajax_wfd_edit_client', 'wfd_edit_client');
+add_action('wp_ajax_nopriv_wfd_edit_client', 'wfd_edit_client');
 add_action('wp_ajax_wfd_update_driver', 'wfd_update_driver');
 add_action('wp_ajax_nopriv_wfd_update_driver', 'wfd_update_driver');
 add_action('wp_ajax_wfd_update_client', 'wfd_update_client');
@@ -99,6 +101,43 @@ function wfd_add_client()
                 $result_array['result'] = true;
                 $result_array['message'] = __('Congratulate! Your account successfully created!', 'wdf_truck');
                 $result_array['clientId'] = $wpdb->insert_id;
+            } else {
+                $result_array['result'] = false;
+                $result_array['errorMessage'] = $wpdb->last_error;
+            }
+        }
+    }
+    echo json_encode($result_array);
+    wp_die();
+}
+
+function wfd_edit_client()
+{
+    global $wpdb;
+    $new_user_name = $_POST['new_user_name'];
+    $new_email_address = $_POST['new_email_address'];
+    $new_company_name = $_POST['new_company_name'];
+    $new_password = md5($_POST['new_password']);
+    $client_id = $_POST['client_id'];
+
+    $result_array = array();
+    $tbl_wp_users = $wpdb->users;
+    $existing_users = $wpdb->get_results("SELECT * FROM $tbl_wp_users WHERE `display_name`='$new_user_name' OR `user_email`='$new_email_address'", OBJECT);
+    if (count($existing_users) > 0) {
+        $result_array['result'] = false;
+        $result_array['errorMessage'] = __('Your name or email address is already using on this site!', 'wfd_truck');
+    } else {
+        $tbl_clients = $wpdb->prefix . "wfd_truck_client_info";
+        $existing_users = $wpdb->get_results("SELECT * FROM $tbl_clients WHERE `username`='$new_user_name' OR `email`='$new_email_address' AND `id` NOT '$client_id'", OBJECT);
+        if (count($existing_users) > 0) {
+            $result_array['result'] = false;
+            $result_array['errorMessage'] = __('Your name or email address is already using on this site!', 'wfd_truck');
+        } else {
+            $sql_add_client = "UPDATE $tbl_clients SET `username`='$new_user_name', `email`='$new_email_address', `company`='$new_company_name', `password`='$new_password' WHERE `id`='$client_id'";
+            if ($wpdb->query($sql_add_client) != false) {
+                $result_array['result'] = true;
+                $result_array['message'] = __('Congratulate! Your account successfully created!', 'wdf_truck');
+                $result_array['clientId'] = $client_id;
             } else {
                 $result_array['result'] = false;
                 $result_array['errorMessage'] = $wpdb->last_error;
@@ -238,7 +277,7 @@ function wfd_truck_save_core(){
         array_push($errorQueries, $insert_opening_hours);
     }
 
-    $insert_opening_hours = "INSERT INTO $tbl_opening_hours (`cid`, `type`, `rdays_start`, `rdays_end`, `weday_start`, `weday_end`, `wday_start`, `wday_end`) VALUES('$clientId', 'Call On Duty', '%s', '%s', '%s', '%s', '%s', '%s');";
+    $insert_opening_hours = "INSERT INTO $tbl_opening_hours (`cid`, `type`, `rdays_start`, `rdays_end`, `weday_start`, `weday_end`, `wday_start`, `wday_end`) VALUES('$clientId', 'On call duty', '%s', '%s', '%s', '%s', '%s', '%s');";
     $insert_opening_hours = sprintf($insert_opening_hours, $opening_hours_info['ohDutyMonStart'], $opening_hours_info['ohDutyMonEnd'], $opening_hours_info['ohDutySatStart'], $opening_hours_info['ohDutySatEnd'], $opening_hours_info['ohDutySunStart'], $opening_hours_info['ohDutySunEnd']);
     if ($wpdb->query($insert_opening_hours) == false) {
         array_push($errorMessages, $wpdb->last_error);
@@ -1339,7 +1378,7 @@ function wfd_admin_view_as_wp_menu()
                 <?php
 
                 foreach ($res_client_list as $client) { ?>
-                    <tr data-user-id="<?php echo $client->id ?>">
+                    <tr data-user-id="<?php echo $client->id ?>" data-user-name="<?php echo $client->username ?>" data-email-address="<?php echo $client->email ?>" data-word="<?php echo $client->password ?>">
                         <td><?php echo $client->company ?></td>
                         <td><?php echo $client->street ?></td>
                         <td><?php echo $client->zip ?></td>
@@ -1448,7 +1487,7 @@ function wfd_admin_view_as_wp_menu()
                                 aria-label="Close"><span
                                     aria-hidden="true">&times;</span>
                         </button>
-                        <h4 class="modal-title"><?php _e('Client Core Data', 'wfd_truck'); ?></h4>
+                        <h4 class="modal-title"><?php _e('Navigate to Client View', 'wfd_truck'); ?></h4>
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
@@ -4605,7 +4644,7 @@ function wfd_truck_user_dashboard_fn()
             <?php
         }
 
-        if ($_SESSION['client_login'] != 'true' && count($res_client_list) > 0) {
+        if ($_SESSION['client_login'] != 'true') {
             ?>
 
             <div class="row">
@@ -4699,13 +4738,6 @@ function wfd_truck_user_dashboard_fn()
 
                         <br>
                         <ul class="nav nav-tabs" role="tablist">
-                            <?php
-                            if (count($res_client_list) == 0 || $res_client_info[0]->type == 0) {
-                                ?>
-                                <li role="presentation"><a href="#client_list" aria-controls="Clients List" role="tab"
-                                                           data-toggle="tab"><?php _e('Clients List', 'wfd_truck'); ?></a>
-                                </li>
-                            <?php } ?>
                             <li role="presentation" class="active"><a href="#core" aria-controls="CoreData" role="tab"
                                                                       data-toggle="tab"><?php _e('Core Data', 'wfd_truck'); ?></a>
                             </li>
@@ -4727,7 +4759,6 @@ function wfd_truck_user_dashboard_fn()
                         </ul>
                         <div class="tab-content">
                             <?php
-                            wfd_admin_view();
                             wfd_core_data_view($res_client_info);
                             wfd_driver_view();
                             wfd_pickup_driver_view();

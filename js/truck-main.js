@@ -67,13 +67,15 @@ $(document).ready(function ($) {
             });
         }
         else {
+            var dlg = $('#add_client');
+            var action = dlg.data('clientId') == undefined ? 'wfd_add_client' : 'wfd_edit_client';
             var data = {
-                request: 'add_new_client',
-                action: 'wfd_add_client',
+                action: action,
                 new_company_name: new_company_name,
                 new_user_name: new_user_name,
                 new_email_address: new_email_address,
-                new_password: new_password
+                new_password: new_password,
+                client_id: dlg.data('clientId')
             };
             $.post(ajax_object.ajax_url,
                 data,
@@ -94,25 +96,25 @@ $(document).ready(function ($) {
                             headerText: ajax_object.successTitle,
                             okButtonText: ajax_object.okText
                         }).done(function (e) {
-                            $('#add_client').modal('hide');
-                            var clientsTable = $('#clients-list');
-                            var newRow = $('<tr  data-user-id="' + response.clientId + '">');
-                            var cols = "";
+                            if (dlg.modal('hide').data('clientId') == undefined) {
+                                var clientsTable = $('#clients-list');
+                                var newRow = $('<tr  data-user-id="' + response.clientId + '">');
+                                var cols = "";
 
-                            cols += '<td>' + new_company_name + '</td>';
-                            cols += '<td/><td/><td/><td/><td/>';
+                                cols += '<td>' + new_company_name + '</td>';
+                                cols += '<td/><td/><td/><td/><td/>';
 
-                            var actionsContent = $('.btn-group-client').html();
-                            cols += '<td>' + actionsContent + '</td>';
+                                var actionsContent = $('.btn-group-client').html();
+                                cols += '<td>' + actionsContent + '</td>';
 
-                            newRow.append(cols);
-                            $('button[data-client-id]', newRow).data('clientId', response.clientId);
+                                newRow.append(cols);
+                                $('button[data-client-id]', newRow).data('clientId', response.clientId);
 
-                            clientsTable.append(newRow);
+                                clientsTable.append(newRow);
 
-                            $('#new_company').val(data.new_company_name);
-                            attachClientActions();
-
+                                $('#new_company').val(data.new_company_name);
+                                attachClientActions();
+                            }
                             $('input[name="client_id"]', $('#modal_nav_client')).val(response.clientId);
                             $('#modal_nav_client').modal('show')
                             // $("body").append('<div>Callback from alert</div>');
@@ -215,8 +217,13 @@ $(document).ready(function ($) {
         });
 
         $('.btn-client-edit').click(function (e) {
-            setClientIdToNavDlg(this, true);
-            $('#modal_nav_client').modal('show');
+            var trElem = $(this).closest('tr');
+            var tdElems = $('td', trElem);
+            $('#new_company_name').val(tdElems[0].textContent);
+            $('#new_user_name').val(trElem.data('userName'));
+            $('#new_email_address').val(trElem.data('emailAddress'));
+            $('#new_password').val(trElem.data('word'));
+            $('#add_client').data('clientId', trElem.data('userId')).modal('show');
         });
 
         $('.btn-client-delete').click(function (e) {
