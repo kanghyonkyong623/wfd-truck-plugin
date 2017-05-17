@@ -381,6 +381,7 @@ $(document).ready(function ($) {
             }).done(function (e) {
                 if(e != ""){
                     if (e == true) {
+                        saveCoreData();
                     }
                     else{
 
@@ -395,6 +396,102 @@ $(document).ready(function ($) {
             activateCoreDataEdit(true);
         }
     });
+
+    function saveCoreData(){
+        var coreInfo = getCoreInfo();
+        var data = {
+            action: 'wfd_truck_save_core',
+            coreInfo: JSON.stringify(coreInfo),
+            openHours: JSON.stringify(getOpenhours()),
+            payment: JSON.stringify(getPayment()),
+            partner: JSON.stringify(getPartner()),
+            assistance: JSON.stringify(getAssistance()),
+            mobi: JSON.stringify(getMobiservice())
+        };
+        $.post(ajax_object.ajax_url,
+            data,
+            function (response) {
+                if (response.result == true) {
+                    ezBSAlert({
+                        messageText: response.message,
+                        alertType: "success",
+                        headerText: ajax_object.successTitle,
+                        okButtonText: ajax_object.okText
+                    });
+                }
+                else {
+                    ezBSAlert({
+                        messageText: response.errorMessage,
+                        alertType: "danger",
+                        headerText: ajax_object.alertTitle,
+                        okButtonText: ajax_object.okText
+                    });
+                    $('#edit-core-data-toggle').click();
+                }
+                },
+            'json'
+        );
+    }
+
+    function getCoreInfo(){
+        var coreInfoInputs = $('input', $('#core-data-container'));
+        var retValues = {};
+        $.each(coreInfoInputs, function (index, inputElem) {
+            inputElem = $(inputElem);
+            retValues[inputElem.prop('name')] = inputElem.val();
+        });
+        return retValues;
+    }
+
+    function getOpenhours(){
+        var openingHoursInputs = $('input', $('#opening-hours'));
+        var retValues = {};
+        $.each(openingHoursInputs, function (index, inputElem) {
+            inputElem = $(inputElem);
+            retValues[inputElem.prop('name')] = inputElem.val();
+        });
+        return retValues;
+    }
+    
+    function getPayment() {
+        var paymentsInputs = $('input', $('#payment-container'));
+        var retValues = {};
+        $.each(paymentsInputs, function (index, inputElem) {
+            inputElem = $(inputElem);
+            retValues[inputElem.prop('name')] = inputElem.prop('checked');
+        });
+        return retValues;
+    }
+    
+    function getPartner() {
+        var partnerInputs = $('input', $('#partner-container'));
+        var retValues = {};
+        $.each(partnerInputs, function (index, inputElem) {
+            inputElem = $(inputElem);
+            retValues[inputElem.prop('name')] = inputElem.prop('checked');
+        });
+        return retValues;
+    }
+    
+    function getAssistance() {
+        var assistanceInputs = $('input', $('#assistance-container'));
+        var retValues = {};
+        $.each(assistanceInputs, function (index, inputElem) {
+            inputElem = $(inputElem);
+            retValues[inputElem.prop('name')] = inputElem.prop('checked');
+        });
+        return retValues;
+    }
+
+    function getMobiservice(){
+        var mobiInputs = $('input', $('#mobi-service-container'));
+        var retValues = [];
+        $.each(mobiInputs, function (index, inputElem) {
+            inputElem = $(inputElem);
+            retValues.push(inputElem.val());
+        });
+        return retValues;
+    }
 
     if(ajax_object.coreDataEditMode == "true"){
         $('#edit-core-data-toggle').click();

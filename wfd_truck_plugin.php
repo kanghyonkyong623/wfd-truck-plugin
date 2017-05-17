@@ -65,6 +65,8 @@ add_action('wp_ajax_wfd_update_client', 'wfd_update_client');
 add_action('wp_ajax_nopriv_wfd_update_client', 'wfd_update_client');
 add_action('wp_ajax_wfd_delete_client', 'wfd_delete_client');
 add_action('wp_ajax_nopriv_wfd_delete_client', 'wfd_delete_client');
+add_action('wp_ajax_wfd_truck_save_core', 'wfd_truck_save_core');
+add_action('wp_ajax_nopriv_wfd_truck_save_core', 'wfd_truck_save_core');
 
 function wfd_add_client()
 {
@@ -181,6 +183,83 @@ function wfd_update_driver()
     wp_die();
 }
 
+function wfd_truck_save_core(){
+    global $wpdb;
+    $errorMessages = array();
+    $errorQueries = array();
+    $core_info = json_decode(stripslashes($_POST['coreInfo']), true);
+    $clientId = $core_info['clientId'];
+
+    //region Core Info
+    $tbl_client_info = $wpdb->prefix.'wfd_truck_client_info';
+    $company = $core_info['company'];
+    $street = $core_info['street'];
+    $zip = $core_info['zip'];
+    $city = $core_info['city'];
+    $phone = $core_info['phone'];
+    $fax = $core_info['fax'];
+    $website=$core_info['website'];
+    $emergency = $core_info['emergencyPhone'];
+    $note = $core_info['note'];
+
+    $sql_update_driver = "UPDATE $tbl_client_info SET company='$company', fax='$fax', website='$website', emergency_phone='$emergency', zip='$zip', street='$street', city='$city', phone='$phone', note='$note' WHERE id='$clientId'";
+
+    if ($wpdb->query($sql_update_driver) == false) {
+        array_push($errorMessages, $wpdb->last_error);
+        array_push($errorQueries, $sql_update_driver);
+    }
+    //endregion
+
+    //<editor-fold desc="Opening Hours">
+
+    $tbl_opening_hours = $wpdb->prefix.'wfd_truck_operating_hours';
+    $opening_hours_info = json_decode(stripslashes($_POST['openHours']), true);
+    $remove_sql = "DELETE FROM $tbl_opening_hours WHERE cid='$clientId'";
+    $wpdb->query($remove_sql);
+
+    $insert_opening_hours = "INSERT INTO $tbl_opening_hours (`cid`, `type`, `rdays_start`, `rdays_end`, `weday_start`, `weday_end`, `wday_start`, `wday_end`)VALUES('$clientId', 'Office', '%s', '%s', '%s', '%s', '%s', '%s');";
+    $insert_opening_hours = sprintf($insert_opening_hours, $opening_hours_info['ohOfficeMonStart'], $opening_hours_info['ohOfficeMonEnd'], $opening_hours_info['ohOfficeSatStart'], $opening_hours_info['ohOfficeSatEnd'], $opening_hours_info['ohOfficeSunStart'], $opening_hours_info['ohOfficeSunEnd']);
+    if ($wpdb->query($insert_opening_hours) == false) {
+        array_push($errorMessages, $wpdb->last_error);
+        array_push($errorQueries, $insert_opening_hours);
+    }
+
+    $insert_opening_hours = "INSERT INTO $tbl_opening_hours (`cid`, `type`, `rdays_start`, `rdays_end`, `weday_start`, `weday_end`, `wday_start`, `wday_end`) VALUES('$clientId', 'Garage', '%s', '%s', '%s', '%s', '%s', '%s');";
+    $insert_opening_hours = sprintf($insert_opening_hours, $opening_hours_info['ohGarageMonStart'], $opening_hours_info['ohGarageMonEnd'], $opening_hours_info['ohGarageSatStart'], $opening_hours_info['ohGarageSatEnd'], $opening_hours_info['ohGarageSunStart'], $opening_hours_info['ohGarageSunEnd']);
+    if ($wpdb->query($insert_opening_hours) == false) {
+        array_push($errorMessages, $wpdb->last_error);
+        array_push($errorQueries, $insert_opening_hours);
+    }
+
+    $insert_opening_hours = "INSERT INTO $tbl_opening_hours (`cid`, `type`, `rdays_start`, `rdays_end`, `weday_start`, `weday_end`, `wday_start`, `wday_end`) VALUES('$clientId', 'Car Rental', '%s', '%s', '%s', '%s', '%s', '%s');";
+    $insert_opening_hours = sprintf($insert_opening_hours, $opening_hours_info['ohCarMonStart'], $opening_hours_info['ohCarMonEnd'], $opening_hours_info['ohCarSatStart'], $opening_hours_info['ohCarSatEnd'], $opening_hours_info['ohCarSunStart'], $opening_hours_info['ohCarSunEnd']);
+    if ($wpdb->query($insert_opening_hours) == false) {
+        array_push($errorMessages, $wpdb->last_error);
+        array_push($errorQueries, $insert_opening_hours);
+    }
+
+    $insert_opening_hours = "INSERT INTO $tbl_opening_hours (`cid`, `type`, `rdays_start`, `rdays_end`, `weday_start`, `weday_end`, `wday_start`, `wday_end`) VALUES('$clientId', 'Call On Duty', '%s', '%s', '%s', '%s', '%s', '%s');";
+    $insert_opening_hours = sprintf($insert_opening_hours, $opening_hours_info['ohDutyMonStart'], $opening_hours_info['ohDutyMonEnd'], $opening_hours_info['ohDutySatStart'], $opening_hours_info['ohDutySatEnd'], $opening_hours_info['ohDutySunStart'], $opening_hours_info['ohDutySunEnd']);
+    if ($wpdb->query($insert_opening_hours) == false) {
+        array_push($errorMessages, $wpdb->last_error);
+        array_push($errorQueries, $insert_opening_hours);
+    }
+    //</editor-fold>
+
+    if (count($errorMessages) == 0) {
+        $result_array['result'] = true;
+        $result_array['message'] = __('Client Core information successfully updated!', 'wfd_truck');
+    } else {
+        $result_array['result'] = false;
+        $result_array['errorMessage'] = join("\n", $errorMessages);
+        $result_array['query'] = join("\n", $errorQueries);
+    }
+
+//    echo $_POST['coreInfo'];
+    echo json_encode($result_array);
+    wp_die();
+
+}
 
 function wfd_truck_settings_fn()
 {
@@ -1713,7 +1792,7 @@ function wfd_core_data_view($res_client_info)
     ?>
     <div role="tabpanel" class="tab-pane active" id="core">
 
-        <div class="col-sm-3">
+        <div class="col-sm-3" id="core-data-container">
             <h2><?php _e('Core Info', 'wfd_truck'); ?></h2>
             <?php
 
@@ -1722,7 +1801,7 @@ function wfd_core_data_view($res_client_info)
                     <label class="control-label col-sm-6"
                            style="padding-left: 40px;line-height: 30px;"><?php _e('Company', 'wfd_truck') ?></label>
                     <div class="col-sm-6">
-                        <input type="text" class="form-control" disabled name="fname"
+                        <input type="text" class="form-control" disabled name="company"
                                value="<?php echo $r1->company ?>">
                     </div>
                 </div>
@@ -1730,37 +1809,44 @@ function wfd_core_data_view($res_client_info)
                     <label class="control-label col-sm-6"
                            style="padding-left: 40px;line-height: 30px;"><?php _e('Street', 'wfd_truck') ?></label>
                     <div class="col-sm-6">
-                        <input type="text" class="form-control" disabled name="fname" value="<?php echo $r1->street ?>">
+                        <input type="text" class="form-control" disabled name="street" value="<?php echo $r1->street ?>">
                     </div>
                 </div>
                 <div class="row form-group">
                     <label class="control-label col-sm-6"
-                           style="padding-left: 40px;line-height: 30px;"><?php _e('Zip', 'wfd_truck') ?>
-                        , <?php _e('City', 'wfd_truck') ?></label>
+                           style="padding-left: 40px;line-height: 30px;"><?php _e('City', 'wfd_truck') ?></label>
                     <div class="col-sm-6">
-                        <input type="text" class="form-control" disabled name="fname"
-                               value="<?php echo $r1->zip ?>, <?php echo $r1->city ?>">
+                        <input type="text" class="form-control" disabled name="city"
+                               value="<?php echo $r1->city ?>">
+                    </div>
+                </div>
+                <div class="row form-group">
+                    <label class="control-label col-sm-6"
+                           style="padding-left: 40px;line-height: 30px;"><?php _e('Zip', 'wfd_truck') ?></label>
+                    <div class="col-sm-6">
+                        <input type="text" class="form-control" disabled name="zip"
+                               value="<?php echo $r1->zip ?>">
                     </div>
                 </div>
                 <div class="row form-group">
                     <label class="control-label col-sm-6"
                            style="padding-left: 40px;line-height: 30px;"><?php _e('Phone', 'wfd_truck') ?>.</label>
                     <div class="col-sm-6">
-                        <input type="text" class="form-control" disabled name="fname" value="<?php echo $r1->phone ?>">
+                        <input type="text" class="form-control" disabled name="phone" value="<?php echo $r1->phone ?>">
                     </div>
                 </div>
                 <div class="row form-group">
                     <label class="control-label col-sm-6"
                            style="padding-left: 40px;line-height: 30px;"><?php _e('Fax', 'wfd_truck') ?>.</label>
                     <div class="col-sm-6">
-                        <input type="text" class="form-control" disabled name="fname" value="<?php echo $r1->fax ?>">
+                        <input type="text" class="form-control" disabled name="fax" value="<?php echo $r1->fax ?>">
                     </div>
                 </div>
                 <div class="row form-group">
                     <label class="control-label col-sm-6"
                            style="padding-left: 40px;line-height: 30px;"><?php _e('Website', 'wfd_truck') ?>.</label>
                     <div class="col-sm-6">
-                        <input type="text" class="form-control" disabled name="fname"
+                        <input type="text" class="form-control" disabled name="website"
                                value="<?php echo $r1->website ?>">
                     </div>
                 </div>
@@ -1769,11 +1855,21 @@ function wfd_core_data_view($res_client_info)
                            style="padding-left: 10px; padding-right:0px;line-height: 30px;"><?php _e('Emergency Phone', 'wfd_truck') ?>
                         .</label>
                     <div class="col-sm-6">
-                        <input type="text" class="form-control" disabled name="fname"
+                        <input type="text" class="form-control" disabled name="emergencyPhone"
                                value="<?php echo $r1->emergency_phone ?>">
                     </div>
                 </div>
                 <div class="row form-group">
+                    <label class="control-label col-sm-6"
+                           style="padding-left: 40px; padding-right:0px;line-height: 30px;"><?php _e('Note', 'wfd_truck') ?>
+                        .</label>
+                    <div class="col-sm-6">
+                        <input type="text" class="form-control" disabled name="note"
+                               value="<?php echo $r1->note ?>">
+                    </div>
+                </div>
+                <div class="row form-group">
+                    <input class="col-sm-6" hidden name="clientId" value="<?php echo $id ?>">
                     <div class="col-sm-6">
                         <button class="btn btn-primary" type="button" data-toggle="button"
                                 id="edit-core-data-toggle"><span
@@ -1810,33 +1906,33 @@ function wfd_core_data_view($res_client_info)
                             <td class="col-sm-2"><?php _e('Office', 'wfd_truck') ?></td>
                             <td>
                                 <div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohOfficeMonStart"
                                                                             value="<?php echo $res_operating_hours_off[0]->rdays_start ?>">
                                     </div>
                                     <div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohOfficeMonEnd"
                                                                             value="<?php echo $res_operating_hours_off[0]->rdays_end ?>">
                                     </div>
                                 </div>
                             </td>
                             <td>
                                 <div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohOfficeSatStart"
                                                                             value="<?php echo $res_operating_hours_off[0]->weday_start ?>">
                                     </div>
                                     <div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohOfficeSatEnd"
                                                                             value="<?php echo $res_operating_hours_off[0]->weday_end ?>">
                                     </div>
                                 </div>
                             </td>
                             <td>
                                 <div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohOfficeSunStart"
                                                                             value="<?php echo $res_operating_hours_off[0]->wday_start ?>">
                                     </div>
                                     <div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohOfficeSunEnd"
                                                                             value="<?php echo $res_operating_hours_off[0]->wday_end ?>">
                                     </div>
                                 </div>
@@ -1846,33 +1942,33 @@ function wfd_core_data_view($res_client_info)
                             <td class="col-sm-2"><?php _e('Garage', 'wfd_truck') ?></td>
                             <td>
                                 <div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohGarageMonStart"
                                                                             value="<?php echo $res_operating_hours_gar[0]->rdays_start ?>">
                                     </div>
                                     <div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohGarageMonEnd"
                                                                             value="<?php echo $res_operating_hours_gar[0]->rdays_end ?>">
                                     </div>
                                 </div>
                             </td>
                             <td>
                                 <div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohGarageSatStart"
                                                                             value="<?php echo $res_operating_hours_gar[0]->weday_start ?>">
                                     </div>
                                     <div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohGarageSatEnd"
                                                                             value="<?php echo $res_operating_hours_gar[0]->weday_end ?>">
                                     </div>
                                 </div>
                             </td>
                             <td>
                                 <div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohGarageSunStart"
                                                                             value="<?php echo $res_operating_hours_gar[0]->wday_start ?>">
                                     </div>
                                     <div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohGarageSunEnd"
                                                                             value="<?php echo $res_operating_hours_gar[0]->wday_end ?>">
                                     </div>
                                 </div>
@@ -1882,33 +1978,33 @@ function wfd_core_data_view($res_client_info)
                             <td><?php _e('Car rental', 'wfd_truck') ?></td>
                             <td>
                                 <div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohCarMonStart"
                                                                             value="<?php echo $res_operating_hours_carrent[0]->rdays_start ?>">
                                     </div>
                                     <div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohCarMonEnd"
                                                                             value="<?php echo $res_operating_hours_carrent[0]->rdays_end ?>">
                                     </div>
                                 </div>
                             </td>
                             <td>
                                 <div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohCarSatStart"
                                                                             value="<?php echo $res_operating_hours_carrent[0]->weday_start ?>">
                                     </div>
                                     <div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohCarSatEnd"
                                                                             value="<?php echo $res_operating_hours_carrent[0]->weday_end ?>">
                                     </div>
                                 </div>
                             </td>
                             <td>
                                 <div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohCarSunStart"
                                                                             value="<?php echo $res_operating_hours_carrent[0]->wday_start ?>">
                                     </div>
                                     <div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohCarSunEnd"
                                                                             value="<?php echo $res_operating_hours_carrent[0]->wday_end ?>">
                                     </div>
                                 </div>
@@ -1918,33 +2014,33 @@ function wfd_core_data_view($res_client_info)
                             <td><?php _e('on-call duty', 'wfd_truck') ?></td>
                             <td>
                                 <div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohDutyMonStart"
                                                                             value="<?php echo $res_operating_hours_oncall[0]->rdays_start ?>">
                                     </div>
                                     <div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohDutyMonEnd"
                                                                             value="<?php echo $res_operating_hours_oncall[0]->rdays_end ?>">
                                     </div>
                                 </div>
                             </td>
                             <td>
                                 <div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohDutySatStart"
                                                                             value="<?php echo $res_operating_hours_oncall[0]->weday_start ?>">
                                     </div>
                                     <div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohDutySatEnd"
                                                                             value="<?php echo $res_operating_hours_oncall[0]->weday_end ?>">
                                     </div>
                                 </div>
                             </td>
                             <td>
                                 <div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohDutySunStart"
                                                                             value="<?php echo $res_operating_hours_oncall[0]->wday_start ?>">
                                     </div>
                                     <div class="col-sm-1">-</div>
-                                    <div class="col-sm-5 time-input"><input type="time"
+                                    <div class="col-sm-5 time-input"><input type="time" name="ohDutySunEnd"
                                                                             value="<?php echo $res_operating_hours_oncall[0]->wday_end ?>">
                                     </div>
                                 </div>
@@ -1957,7 +2053,7 @@ function wfd_core_data_view($res_client_info)
 
             </div>
             <div class="row">
-                <div class="col-sm-3">
+                <div class="col-sm-3" id="payment-container">
                     <h3><?php _e('Payment', 'wfd_truck'); ?></h3>
                     <ul class="nav" style="padding-left: 0; margin-left: 0">
                         <?php
@@ -1967,9 +2063,9 @@ function wfd_core_data_view($res_client_info)
                                 <label>
                                     <?php
                                     if (in_array($pm, $res_pay_m_u)) {
-                                        echo '<input type = "checkbox" checked >';
+                                        echo '<input name="'.$pm->method.'" type = "checkbox" checked >';
                                     } else {
-                                        echo '<input type="checkbox">';
+                                        echo '<input name="'.$pm->method.'" type="checkbox">';
                                     } ?>
                                     <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
                                     <?php echo $pm->method ?>
@@ -1978,7 +2074,7 @@ function wfd_core_data_view($res_client_info)
                         <?php } ?>
                     </ul>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-sm-3" id="partner-container">
                     <h3><?php _e('Partner', 'wfd_truck'); ?></h3>
                     <ul class="nav" style="padding-left: 0; margin-left: 0">
                         <?php
@@ -1988,9 +2084,9 @@ function wfd_core_data_view($res_client_info)
                                 <label>
                                     <?php
                                     if (in_array($p, $res_partner_u)) {
-                                        echo '<input type = "checkbox" checked >';
+                                        echo '<input name="'.$p->partner.'" type = "checkbox" checked >';
                                     } else {
-                                        echo '<input type="checkbox">';
+                                        echo '<input name="'.$p->partner.'" type="checkbox">';
                                     } ?>
                                     <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
                                     <?php echo $p->partner ?>
@@ -2009,9 +2105,9 @@ function wfd_core_data_view($res_client_info)
                                 <label>
                                     <?php
                                     if (in_array($pa, $res_assistance_u)) {
-                                        echo '<input type = "checkbox" checked >';
+                                        echo '<input name="'.$pa->assistance.'" type = "checkbox" checked >';
                                     } else {
-                                        echo '<input type="checkbox">';
+                                        echo '<input name="'.$pa->assistance.'" type="checkbox">';
                                     } ?>
                                     <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
                                     <?php echo $pa->assistance ?>
