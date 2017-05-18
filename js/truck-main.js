@@ -116,7 +116,7 @@ $(document).ready(function ($) {
                                 attachClientActions();
                             }
                             $('input[name="client_id"]', $('#modal_nav_client')).val(response.clientId);
-                            $('#modal_nav_client').modal('show')
+                            $('#form-navigate-client-view').submit();
                             // $("body").append('<div>Callback from alert</div>');
                         });
                     }
@@ -213,7 +213,7 @@ $(document).ready(function ($) {
     function attachClientActions(){
         $('.btn-client-view').click(function (e) {
             setClientIdToNavDlg(this);
-            $('#modal_nav_client').modal('show');
+            $('#form-navigate-client-view').submit();
         });
 
         $('.btn-client-edit').click(function (e) {
@@ -462,30 +462,36 @@ $(document).ready(function ($) {
     
     function getPayment() {
         var paymentsInputs = $('input', $('#payment-container'));
-        var retValues = {};
+        var retValues = [];
         $.each(paymentsInputs, function (index, inputElem) {
             inputElem = $(inputElem);
-            retValues[inputElem.prop('name')] = inputElem.prop('checked');
+            if(inputElem.prop('checked') == true){
+                retValues.push(inputElem.prop('name'));
+            }
         });
         return retValues;
     }
     
     function getPartner() {
         var partnerInputs = $('input', $('#partner-container'));
-        var retValues = {};
+        var retValues = [];
         $.each(partnerInputs, function (index, inputElem) {
             inputElem = $(inputElem);
-            retValues[inputElem.prop('name')] = inputElem.prop('checked');
+            if(inputElem.prop('checked') == true){
+                retValues.push(inputElem.prop('name'));
+            }
         });
         return retValues;
     }
     
     function getAssistance() {
         var assistanceInputs = $('input', $('#assistance-container'));
-        var retValues = {};
+        var retValues = [];
         $.each(assistanceInputs, function (index, inputElem) {
             inputElem = $(inputElem);
-            retValues[inputElem.prop('name')] = inputElem.prop('checked');
+            if(inputElem.prop('checked') == true){
+                retValues.push(inputElem.prop('name'));
+            }
         });
         return retValues;
     }
@@ -495,7 +501,9 @@ $(document).ready(function ($) {
         var retValues = [];
         $.each(mobiInputs, function (index, inputElem) {
             inputElem = $(inputElem);
-            retValues.push(inputElem.val());
+            if($.trim(inputElem.val()).length > 0){
+                retValues.push(inputElem.val());
+            }
         });
         return retValues;
     }
@@ -519,7 +527,7 @@ $(document).ready(function ($) {
             messageText: ajax_object.enterNewAssistanceMessage,
             alertType: "primary"
         }).done(function (e) {
-            $('#assistance-container').append('<div class="checkbox"><label><input type="checkbox"><span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>' +
+            $('#assistance-container').append('<div class="checkbox"><label><input type="checkbox" name="' + e + '"><span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>' +
                 e + '</label></div>');
         });
 

@@ -23,6 +23,14 @@ function plugin_init()
     load_plugin_textdomain('wfd_truck', false, dirname(plugin_basename(__FILE__)) . '/languages/');
 }
 
+add_action('wp_logout', wp_user_logout);
+
+function wp_user_logout(){
+    $_SESSION['client_login'] = 'false';
+    $_SESSION['client_username'] = '';
+    $_SESSION['client_id'] = '';
+}
+
 //add_action( 'wp_enqueue_scripts', 'my_enqueue' );
 function my_enqueue()
 {
@@ -243,13 +251,13 @@ function wfd_truck_save_core(){
 
     $sql_update_driver = "UPDATE $tbl_client_info SET company='$company', fax='$fax', website='$website', emergency_phone='$emergency', zip='$zip', street='$street', city='$city', phone='$phone', note='$note' WHERE id='$clientId'";
 
-    if ($wpdb->query($sql_update_driver) == false) {
+    if ($wpdb->query($sql_update_driver) == false && $wpdb->last_error != "") {
         array_push($errorMessages, $wpdb->last_error);
         array_push($errorQueries, $sql_update_driver);
     }
     //endregion
 
-    //<editor-fold desc="Opening Hours">
+    //region Opening Hours
 
     $tbl_opening_hours = $wpdb->prefix.'wfd_truck_operating_hours';
     $opening_hours_info = json_decode(stripslashes($_POST['openHours']), true);
@@ -283,7 +291,85 @@ function wfd_truck_save_core(){
         array_push($errorMessages, $wpdb->last_error);
         array_push($errorQueries, $insert_opening_hours);
     }
-    //</editor-fold>
+    //endregion
+
+    //region Payment
+    $payment = json_decode(stripslashes($_POST['payment']), true);
+    $tbl_pay_m = $wpdb->prefix."wfd_truck_pay_m";
+    $tbl_pay_m_u = $wpdb->prefix."wfd_truck_truck_pay_m_u";
+    $sql_pay_insert_temp = "INSERT INTO $tbl_pay_m_u (payid, cid) SELECT p.id, '%s' FROM $tbl_pay_m p WHERE method='%s';";
+    $sql_delete_pay = "DELETE FROM $tbl_pay_m_u WHERE cid='$clientId'";
+    $wpdb->query($sql_delete_pay);
+
+    foreach ($payment as $method){
+        $sql_pay_insert = sprintf($sql_pay_insert_temp, $clientId, $method);
+        if ($wpdb->query($sql_pay_insert) == false) {
+            array_push($errorMessages, $wpdb->last_error);
+            array_push($errorQueries, $sql_pay_insert);
+        }
+    }
+    //endregion
+
+    //region Partner
+    $partner = json_decode(stripslashes($_POST['partner']), true);
+    $tbl_partner_m = $wpdb->prefix."wfd_truck_truck_partner";
+    $tbl_partner_m_u = $wpdb->prefix."wfd_truck_truck_partner_u";
+    $sql_partner_insert_temp = "INSERT INTO $tbl_partner_m_u (pid, cid) SELECT p.id, '%s' FROM $tbl_partner_m p WHERE partner='%s';";
+    $sql_delete_partner = "DELETE FROM $tbl_partner_m_u WHERE cid='$clientId'";
+    $wpdb->query($sql_delete_partner);
+
+    foreach ($partner as $method){
+        $sql_partner_insert = sprintf($sql_partner_insert_temp, $clientId, $method);
+        if ($wpdb->query($sql_partner_insert) == false) {
+            array_push($errorMessages, $wpdb->last_error);
+            array_push($errorQueries, $sql_partner_insert);
+        }
+    }
+    //endregion
+
+    //region Assistance
+    $assistance = json_decode(stripslashes($_POST['assistance']), true);
+    $tbl_assistance = $wpdb->prefix."wfd_truck_assistance";
+    $tbl_assistance_u = $wpdb->prefix."wfd_truck_assistance_u";
+    $assistance_values = $wpdb->get_results("SELECT * FROM $tbl_assistance", OBJECT);
+
+    $sql_assistance_insert_temp = "INSERT INTO $tbl_assistance_u (aid, cid) SELECT p.id, '%s' FROM $tbl_assistance p WHERE assistance='%s';";
+    $sql_delete_partner = "DELETE FROM $tbl_assistance_u WHERE cid='$clientId'";
+    $wpdb->query($sql_delete_partner);
+
+    foreach ($assistance as $method){
+        $is_new = true;
+        foreach ($assistance_values as $ass){
+            if($ass->assistance == $method){
+                $is_new = false;
+                break;
+            }
+        }
+        if($is_new == true){
+            $wpdb->query("INSERT INTO $tbl_assistance (`assistance`) VALUES('$method')");
+        }
+        $sql_assistance_insert = sprintf($sql_assistance_insert_temp, $clientId, $method);
+        if ($wpdb->query($sql_assistance_insert) == false) {
+            array_push($errorMessages, $wpdb->last_error);
+            array_push($errorQueries, $sql_assistance_insert);
+        }
+    }
+    //endregion
+
+    //region Mobi Service
+    $mobi = json_decode(stripslashes($_POST['mobi']), true);
+    $tbl_mobi = $wpdb->prefix."wfd_truck_mobi_service";
+
+    $wpdb->query("DELETE FROM $tbl_mobi WHERE cid='$clientId'");
+
+    $m = join("'), ($clientId, '", $mobi);
+    $sql_mobi = "INSERT INTO $tbl_mobi (cid, mobi_service) VALUES ($clientId, '$m')";
+    if ($wpdb->query($sql_mobi) == false) {
+        array_push($errorMessages, $wpdb->last_error);
+        array_push($errorQueries, $sql_mobi);
+    }
+    //endregion
+
 
     if (count($errorMessages) == 0) {
         $result_array['result'] = true;
@@ -303,298 +389,63 @@ function wfd_truck_save_core(){
 function wfd_truck_settings_fn()
 {
     global $wpdb;
-    $tbl_licences = $wpdb->prefix . "wfd_truck_driver_licences";
-    $res_licences = $wpdb->get_results("select * from $tbl_licences", OBJECT);
+    $tbl_urls = $wpdb->prefix."wfd_client_page";
+    $client_page_urls = $wpdb->get_results("SELECT * FROM $tbl_urls");
+    if(isset($_POST['client-page'])){
+        if(count($client_page_urls) > 0){
+            $page_id = $client_page_urls[0]->Id;
+            $wpdb->query("UPDATE $tbl_urls SET `url`='".$_POST['client-page']."' WHERE `Id`=$page_id");
+        }
+        else{
+            $wpdb->query("INSERT INTO $tbl_urls (`url`) VALUES ('".$_POST['client-page']."')");
+        }
+        $client_page_urls = $wpdb->get_results("SELECT * FROM $tbl_urls");
 
-    $tbl_qualification = $wpdb->prefix . "wfd_truck_driver_qualification";
-    $res_qualification = $wpdb->get_results("select * from $tbl_qualification", OBJECT);
+    }
 
-    $tbl_ranking = $wpdb->prefix . "wfd_truck_driver_ranking";
-    $res_ranking = $wpdb->get_results("select * from $tbl_ranking", OBJECT);
+    ?>
+    <div class="wrap">
+        <label><h1>Truck Settings</h1></label>
+        <form method="post">
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><label ><?php _e('Select Client page', 'wfd_truck'); ?></label></th>
+                    <td><select name="client-page" id="select-client-page" style="width: 15%;">
+
+                        <?php
+                        $pages = get_pages();
+                        foreach ($pages as $page) {
+                            if(count($client_page_urls) > 0 && $client_page_urls[0]->url == get_page_link($page->ID)){
+                                $option = '<option value="' . get_page_link($page->ID) . '" selected>';
+                            }
+                            else{
+                                $option = '<option value="' . get_page_link($page->ID) . '">';
+                            }
+                            $option .= $page->post_title;
+                            $option .= '</option>';
+                            echo $option;
+                        }
+                        ?>
+                        </select></td>
+                </tr>
+            </table>
+            <p class="submit">
+                <input type="submit" class="button button-primary" id="settings-save" value="<?php _e('Save Changes', 'wfd_truck'); ?>">
+            </p>
+        </form>
+    </div>
+    <?php
+//    $tbl_licences = $wpdb->prefix . "wfd_truck_driver_licences";
+//    $res_licences = $wpdb->get_results("select * from $tbl_licences", OBJECT);
+//
+//    $tbl_qualification = $wpdb->prefix . "wfd_truck_driver_qualification";
+//    $res_qualification = $wpdb->get_results("select * from $tbl_qualification", OBJECT);
+//
+//    $tbl_ranking = $wpdb->prefix . "wfd_truck_driver_ranking";
+//    $res_ranking = $wpdb->get_results("select * from $tbl_ranking", OBJECT);
 
 //  print_r($res_licences);
 //  print_r($res_qualification);
-    ?>
-
-    <style>#wpbody-content {
-            width: 98.5%;
-        }</style>
-    <h2><?php _e('Settings', 'wfd_truck'); ?></h2>
-
-    <script>
-        jQuery(document).ready(function () {
-            //   jQuery('table').DataTable();
-        });
-    </script>
-
-    <div class="row">
-        <div class="col-sm-6">
-            <h3><?php _e('Licenses', 'wfd_truck'); ?></h3>
-
-            <table class="table dataTable table-striped">
-                <thead>
-                <tr>
-                    <th><?php _e('SL#', 'wfd_truck'); ?></th>
-                    <th><?php _e('Licenses Name', 'wfd_truck'); ?></th>
-                    <th><?php _e('Action', 'wfd_truck'); ?></th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php
-                $i = 1;
-                foreach ($res_licences as $rl) {
-                    ?>
-                    <tr>
-                        <td><?php echo $i;
-                            $i++ ?></td>
-                        <td><?php echo $rl->licences ?></td>
-                        <td>
-                            <a href="?page=wfd_truck_settings&act=licedit&id=<?php echo $rl->id ?>"><?php _e('Edit', 'wfd_truck'); ?></a>
-                            <a href="?page=wfd_truck_settings&act=licdel&id=<?php echo $rl->id ?>"
-                               onClick="return confirm(<?php _e('Are you sure?', 'wfd_truck'); ?>)"><?php _e('Delete', 'wfd_truck'); ?></a>
-                        </td>
-                    </tr>
-                <?php } ?>
-                </tbody>
-            </table>
-
-            <a class="btn btn-primary" role="button" data-toggle="collapse" href="#colLicenses" aria-expanded="false"
-               aria-controls="collapseExample">
-                <?php _e('New Licenses', 'wfd_truck'); ?>
-            </a>
-
-            <div class="collapse" id="colLicenses">
-                <div class="well">
-                    <form method="POST">
-                        <div class="form-group">
-                            <label><?php _e('License Name', 'wfd_truck'); ?></label>
-                            <input type="text" name="licenses" class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <input type="submit" class="btn btn-primary" value="Save License" name="save_license">
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <?php if ($_GET['act'] == 'licedit') {
-                $id = $_GET['id'];
-                $res_licences_id = $wpdb->get_results("SELECT * FROM $tbl_licences where id=$id");
-
-                ?>
-                <h3><?php _e('Update Qualification', 'wfd_truck'); ?></h3>
-                <form method="POST">
-                    <div class="form-group">
-                        <label><?php _e('Qualification Name', 'wfd_truck'); ?></label>
-                        <input type="text" name="licenses" class="form-control"
-                               value="<?php echo $res_licences_id[0]->licences ?>">
-                        <input type='hidden' name="id" value="<?php echo $res_licences_id[0]->id ?>"/>
-                    </div>
-                    <div class="form-group">
-                        <input type="submit" class="btn btn-primary"
-                               value="<?php _e('Update Licenses', 'wfd_truck'); ?>" name="update_licenses">
-                    </div>
-                </form>
-            <?php }
-
-            if ($_GET['act'] == 'licdel') {
-                $id = $_GET['id'];
-                $wpdb->query("DELETE FROM $tbl_licences where id=$id", OBJECT);
-                ?>
-
-
-                <h2><?php _e('Data Deleted...', 'wfd_truck'); ?></h2>
-                <script>
-                    setTimeout(function () {
-                        window.location.href = "<?php echo site_url(); ?>/<?php echo admin_url();?>/admin.php?page=wfd_truck_settings";
-                    }, 3000);
-                </script>
-
-                <?php
-
-            }
-            ?>
-
-
-        </div>
-        <div class="col-sm-6">
-            <h3><?php _e('Qualification', 'wfd_truck'); ?></h3>
-            <table class="table dataTable table-striped">
-                <thead>
-                <tr>
-                    <th><?php _e('SL#', 'wfd_truck'); ?></th>
-                    <th><?php _e('Qualification Name', 'wfd_truck'); ?></th>
-                    <th><?php _e('Action', 'wfd_truck'); ?></th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php
-                $i = 1;
-                foreach ($res_qualification as $rq) {
-                    ?>
-                    <tr>
-                        <td><?php echo $i;
-                            $i++ ?></td>
-                        <td><?php echo $rq->qualification ?></td>
-                        <td>
-                            <a href="?page=wfd_truck_settings&act=quaedit&id=<?php echo $rq->id ?>"><?php _e('Edit', 'wfd_truck'); ?></a>
-                            <a href="?page=wfd_truck_settings&act=quadel&id=<?php echo $rq->id ?>"
-                               onClick="return confirm(<?php _e('Are you sure?', 'wfd_truck'); ?>)"><?php _e('Delete', 'wfd_truck'); ?></a>
-                        </td>
-                    </tr>
-                <?php } ?>
-                </tbody>
-            </table>
-
-
-            <a class="btn btn-primary" role="button" data-toggle="collapse" href="#colQualification"
-               aria-expanded="false" aria-controls="collapseExample">
-                <?php _e('New Qualification', 'wfd_truck'); ?>
-            </a>
-
-            <div class="collapse" id="colQualification">
-                <div class="well">
-                    <form method="POST">
-                        <div class="form-group">
-                            <label><?php _e('Qualification Name', 'wfd_truck'); ?></label>
-                            <input type="text" name="qualification" class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <input type="submit" class="btn btn-primary"
-                                   value="<?php _e('Save Qualification', 'wfd_truck'); ?>" name="save_qualification">
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <?php if ($_GET['act'] == 'quaedit') {
-                $id = $_GET['id'];
-                $res_quaedit = $wpdb->get_results("SELECT * FROM $tbl_qualification where id=$id");
-
-                ?>
-                <h3><?php _e('Update Qualification', 'wfd_truck'); ?></h3>
-                <form method="POST">
-                    <div class="form-group">
-                        <label><?php _e('Qualification Name', 'wfd_truck'); ?></label>
-                        <input type="text" name="qualification" class="form-control"
-                               value="<?php echo $res_quaedit[0]->qualification ?>">
-                        <input type='hidden' name="id" value="<?php echo $res_quaedit[0]->id ?>"/>
-                    </div>
-                    <div class="form-group">
-                        <input type="submit" class="btn btn-primary"
-                               value="<?php _e('Update Qualification', 'wfd_truck'); ?>" name="update_qualification">
-                    </div>
-                </form>
-            <?php }
-
-            if ($_GET['act'] == 'quadel') {
-                $id = $_GET['id'];
-                $wpdb->query("DELETE FROM $tbl_qualification where id=$id", OBJECT);
-                ?>
-
-
-                <h2><?php _e('Data Deleted...', 'wfd_truck'); ?></h2>
-                <script>
-                    setTimeout(function () {
-                        window.location.href = "<?php echo site_url(); ?>/<?php echo admin_url();?>/admin.php?page=wfd_truck_settings";
-                    }, 3000);
-                </script>
-
-                <?php
-
-            }
-            ?>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-6">
-            <h3><?php _e('Ranking', 'wfd_truck'); ?></h3>
-            <table class="table dataTable table-striped">
-                <thead>
-                <tr>
-                    <th><?php _e('SL#', 'wfd_truck'); ?></th>
-                    <th><?php _e('Ranking Item Name', 'wfd_truck'); ?></th>
-                    <th><?php _e('Action', 'wfd_truck'); ?></th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php
-                $i = 1;
-                foreach ($res_ranking as $rk) {
-                    ?>
-                    <tr>
-                        <td><?php echo $i;
-                            $i++ ?></td>
-                        <td><?php echo $rk->rank_item ?></td>
-                        <td>
-                            <a href="?page=wfd_truck_settings&act=rankedit&id=<?php echo $rk->id ?>"><?php _e('Edit', 'wfd_truck'); ?></a>
-                            <a href="?page=wfd_truck_settings&act=rankdel&id=<?php echo $rk->id ?>"
-                               onClick="return confirm(<?php _e('Are you sure?', 'wfd_truck'); ?>)"><?php _e('Delete', 'wfd_truck'); ?></a>
-                        </td>
-                    </tr>
-                <?php } ?>
-                </tbody>
-            </table>
-
-
-            <a class="btn btn-primary" role="button" data-toggle="collapse" href="#colRank" aria-expanded="false"
-               aria-controls="collapseExample">
-                <?php _e('New Rank Item', 'wfd_truck'); ?>
-            </a>
-
-            <div class="collapse" id="colRank">
-                <div class="well">
-                    <form method="POST">
-                        <div class="form-group">
-                            <label><?php _e('Rank Item Name', 'wfd_truck'); ?></label>
-                            <input type="text" name="rank_item" class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <input type="submit" class="btn btn-primary"
-                                   value="<?php _e('Save Qualification', 'wfd_truck'); ?>" name="save_ranking">
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <?php if ($_GET['act'] == 'rankedit') {
-                $id = $_GET['id'];
-                $res_rankedit = $wpdb->get_results("SELECT * FROM $tbl_ranking where id=$id");
-
-                ?>
-                <h3><?php _e('Update Qualification', 'wfd_truck'); ?></h3>
-                <form method="POST">
-                    <div class="form-group">
-                        <label><?php _e('Rank Item Name', 'wfd_truck'); ?></label>
-                        <input type="text" name="rank_item" class="form-control"
-                               value="<?php echo $res_rankedit[0]->rank_item ?>">
-                        <input type='hidden' name="id" value="<?php echo $id ?>"/>
-                    </div>
-                    <div class="form-group">
-                        <input type="submit" class="btn btn-primary"
-                               value="<?php _e('Update Qualification', 'wfd_truck'); ?>" name="update_ranking">
-                    </div>
-                </form>
-            <?php }
-
-            if ($_GET['act'] == 'rankdel') {
-                $id = $_GET['id'];
-                $wpdb->query("DELETE FROM $tbl_ranking where id=$id", OBJECT);
-                ?>
-
-
-                <h2><?php _e('Data Deleted...', 'wfd_truck'); ?></h2>
-                <script>
-                    setTimeout(function () {
-                        window.location.href = "<?php echo site_url(); ?>/<?php echo admin_url();?>/admin.php?page=wfd_truck_settings";
-                    }, 3000);
-                </script>
-
-                <?php
-
-            }
-            ?>
-        </div>
-    </div>
-    <?php
 
 }
 
@@ -1329,10 +1180,16 @@ function wfd_admin_view_as_wp_menu()
     global $wpdb;
     $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
     $res_client_list = $wpdb->get_results("select * from $tbl_client_info", OBJECT);
-    $res_company_list = $wpdb->get_results("SELECT DISTINCT `company` FROM $tbl_client_info ORDER BY 'company'", OBJECT);
-    $res_zip_list = $wpdb->get_results("SELECT DISTINCT `zip` FROM $tbl_client_info ORDER BY 'zip'", OBJECT);
-    $res_city_list = $wpdb->get_results("SELECT DISTINCT `city` FROM $tbl_client_info ORDER BY 'city'", OBJECT);
 
+    $tbl_client_view_url = $wpdb->prefix."wfd_client_page";
+    $res_client_view_url = $wpdb->get_results("SELECT * FROM $tbl_client_view_url", OBJECT);
+
+    if(count($res_client_view_url) > 0){
+        $nav_url = $res_client_view_url[0]->url;
+    }
+    else{
+        $nav_url = menu_page_url('wfd_truck_settings');
+    }
     my_enqueue();
     ?>
     <div role="tabpanel" class="tab-pane" id="client_list">
@@ -1509,7 +1366,7 @@ function wfd_admin_view_as_wp_menu()
                             </div>
                         </div>
                     </div>
-                    <form method="post" id="form-navigate-client-view">
+                    <form method="post" id="form-navigate-client-view" action="<?php echo $nav_url ?>">
                         <input hidden name="admin" value="true">
                         <input hidden name="client_id" value="">
                         <input hidden name="edit_mode" value="false">
@@ -2101,11 +1958,14 @@ function wfd_core_data_view($res_client_info)
                             <div class="checkbox">
                                 <label>
                                     <?php
-                                    if (in_array($pm, $res_pay_m_u)) {
-                                        echo '<input name="'.$pm->method.'" type = "checkbox" checked >';
-                                    } else {
-                                        echo '<input name="'.$pm->method.'" type="checkbox">';
-                                    } ?>
+                                    $inputElem = '<input name="' . $pm->method . '" type="checkbox">';
+                                    foreach ($res_pay_m_u as $pmu) {
+                                        if ($pm->id == $pmu->payid) {
+                                            $inputElem = '<input name="' . $pm->method . '" type = "checkbox" checked >';
+                                        }
+                                    }
+                                    echo $inputElem;
+                                    ?>
                                     <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
                                     <?php echo $pm->method ?>
                                 </label>
@@ -2122,11 +1982,14 @@ function wfd_core_data_view($res_client_info)
                             <div class="checkbox">
                                 <label>
                                     <?php
-                                    if (in_array($p, $res_partner_u)) {
-                                        echo '<input name="'.$p->partner.'" type = "checkbox" checked >';
-                                    } else {
-                                        echo '<input name="'.$p->partner.'" type="checkbox">';
-                                    } ?>
+                                    $inputElem = '<input name="' . $p->partner . '" type="checkbox">';
+                                    foreach ($res_partner_u as $pmu) {
+                                        if ($p->id == $pmu->pid) {
+                                            $inputElem = '<input name="' . $p->partner . '" type = "checkbox" checked >';
+                                        }
+                                    }
+                                    echo $inputElem;
+                                    ?>
                                     <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
                                     <?php echo $p->partner ?>
                                 </label>
@@ -2143,11 +2006,14 @@ function wfd_core_data_view($res_client_info)
                             <div class="checkbox">
                                 <label>
                                     <?php
-                                    if (in_array($pa, $res_assistance_u)) {
-                                        echo '<input name="'.$pa->assistance.'" type = "checkbox" checked >';
-                                    } else {
-                                        echo '<input name="'.$pa->assistance.'" type="checkbox">';
-                                    } ?>
+                                    $inputElem = '<input name="' . $pa->assistance . '" type="checkbox">';
+                                    foreach ($res_assistance_u as $pmu) {
+                                        if ($pa->id == $pmu->aid) {
+                                            $inputElem = '<input name="' . $pa->assistance . '" type = "checkbox" checked >';
+                                        }
+                                    }
+                                    echo $inputElem;
+                                    ?>
                                     <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
                                     <?php echo $pa->assistance ?>
                                 </label>
@@ -2163,7 +2029,7 @@ function wfd_core_data_view($res_client_info)
                         <?php
                         $count = 3;
                         foreach ($res_mobi_service as $ms) {
-                            $labelNum = 3 - $count;
+                            $labelNum = 4 - $count;
                             $count-- ?>
                             <div class="row form-group">
                                 <label class="control-label col-sm-4"
