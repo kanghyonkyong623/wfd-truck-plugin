@@ -232,8 +232,8 @@ input[type=time]::-webkit-outer-spin-button {
     margin: 0;
 }
 
-#file-upload{
-    display: none;
+.file-upload{
+    display: none !important;
 }
 
 .modal-body.well{

@@ -95,6 +95,7 @@ add_action('wp_ajax_nopriv_wfd_delete_callnum', 'wfd_delete_callnum');
 add_action('wp_ajax_nopriv_wfd_add_truck', 'wfd_add_truck');
 add_action('wp_ajax_nopriv_wfd_delete_truck', 'wfd_delete_truck');
 add_action('wp_ajax_nopriv_wfd_update_truck', 'wfd_update_truck');
+add_action('wp_ajax_wfd_update_truck', 'wfd_update_truck');
 add_action('wp_ajax_wfd_get_driver_detail', 'wfd_get_driver_detail');
 add_action('wp_ajax_nopriv_wfd_get_driver_detail', 'wfd_get_driver_detail');
 add_action('wp_ajax_wfd_delete_driver', 'wfd_delete_driver');
@@ -243,12 +244,12 @@ function wfd_driver_save()
     $tbl_drivers = $wpdb->prefix . "wfd_truck_driver_info";
 
     if ($_POST['mode'] == 'new') {
-        $sql_driver = "INSERT INTO $tbl_drivers (`fname`, `lname`, `street`, `city`, `phone`, `note`, `type`, `cid`, `breakdown_rating`, `dragcar_rating`, `dragless_rating`, `dragmore_rating`, `crane_rating`, `truckservice_rating`, `c1_license`, `c1e_license`, `crane_license`, `kennz_license`, `clubmobile_license`, `caropening_license`, `motormech_qual`, `motorfore_qual`, `learned_qual`, `unlearned_qual`, `commercial_qual`) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', 'Driver', '$clientId', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')";
+        $sql_driver = "INSERT INTO $tbl_drivers (`fname`, `lname`, `street`, `city`, `phone`, `note`, `type`, `cid`, `breakdown_rating`, `dragcar_rating`, `dragless_rating`, `dragmore_rating`, `crane_rating`, `truckservice_rating`, `c1_license`, `c1e_license`, `crane_license`, `kennz_license`, `clubmobile_license`, `caropening_license`, `motormech_qual`, `motorfore_qual`, `learned_qual`, `unlearned_qual`, `commercial_qual`, `picture`) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', 'Driver', '$clientId', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')";
     } else {
-        $sql_driver = "UPDATE $tbl_drivers SET fname='%s', lname='%s', street='%s', city='%s', phone='%s', note='%s', breakdown_rating='%s', dragcar_rating='%s', dragless_rating='%s', dragmore_rating='%s', crane_rating='%s', truckservice_rating='%s', c1_license='%s', c1e_license='%s', crane_license='%s', kennz_license='%s', clubmobile_license='%s', caropening_license='%s', motormech_qual='%s', motorfore_qual='%s', learned_qual='%s', unlearned_qual='%s', commercial_qual='%s' WHERE id='$driverId'";
+        $sql_driver = "UPDATE $tbl_drivers SET fname='%s', lname='%s', street='%s', city='%s', phone='%s', note='%s', breakdown_rating='%s', dragcar_rating='%s', dragless_rating='%s', dragmore_rating='%s', crane_rating='%s', truckservice_rating='%s', c1_license='%s', c1e_license='%s', crane_license='%s', kennz_license='%s', clubmobile_license='%s', caropening_license='%s', motormech_qual='%s', motorfore_qual='%s', learned_qual='%s', unlearned_qual='%s', commercial_qual='%s', picture='%s' WHERE id='$driverId'";
     }
 
-    $sql_driver = sprintf($sql_driver, $coreData['fname'], $coreData['lname'], $coreData['street'], $coreData['city'], $coreData['phone'], $coreData['note'], $applicationData['breakdown'], $applicationData['drag-cars'], $applicationData['drag-less-7'], $applicationData['drag-more-7'], $applicationData['crane'], $applicationData['truck-service'], $licenseData['c1'], $licenseData['c1e'], $licenseData['crane-lic'], $licenseData['kennz95'], $licenseData['club-mobil'], $licenseData['car-opening'], $qualificationData['motor-mechatronics'], $qualificationData['motor-foreman'], $qualificationData['learned'], $qualificationData['unlearned'], $qualificationData['commercial']);
+    $sql_driver = sprintf($sql_driver, $coreData['fname'], $coreData['lname'], $coreData['street'], $coreData['city'], $coreData['phone'], $coreData['note'], $applicationData['breakdown'], $applicationData['drag-cars'], $applicationData['drag-less-7'], $applicationData['drag-more-7'], $applicationData['crane'], $applicationData['truck-service'], $licenseData['c1'], $licenseData['c1e'], $licenseData['crane-lic'], $licenseData['kennz95'], $licenseData['club-mobil'], $licenseData['car-opening'], $qualificationData['motor-mechatronics'], $qualificationData['motor-foreman'], $qualificationData['learned'], $qualificationData['unlearned'], $qualificationData['commercial'], $_POST['new_profile_pic']);
 
     if ($wpdb->query($sql_driver) != false) {
         $result_array['result'] = true;
@@ -277,12 +278,12 @@ function wfd_pickup_driver_save()
     $tbl_drivers = $wpdb->prefix . "wfd_truck_pickup_driver_info";
 
     if ($_POST['mode'] == 'new') {
-        $sql_driver = "INSERT INTO $tbl_drivers (`fname`, `lname`, `street`, `city`, `phone`, `note`, `type`, `cid`, `pickups_less_250`, `pickups_less_500`, `pickups_more_500`, `cars`, `truck_less_3`, `truck_less_7`, `c1_license`, `c1e_license`, `crane_lic`, `kennz95`, `motor_mechatronics`, `motor_foreman`, `learned`, `unlearned`, `commercial`) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', 'Pickup Driver', '$clientId', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')";
+        $sql_driver = "INSERT INTO $tbl_drivers (`fname`, `lname`, `street`, `city`, `phone`, `note`, `type`, `cid`, `pickups_less_250`, `pickups_less_500`, `pickups_more_500`, `cars`, `truck_less_3`, `truck_less_7`, `c1_license`, `c1e_license`, `crane_lic`, `kennz95`, `motor_mechatronics`, `motor_foreman`, `learned`, `unlearned`, `commercial`, `picture`) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', 'Pickup Driver', '$clientId', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')";
     } else {
-        $sql_driver = "UPDATE $tbl_drivers SET fname='%s', lname='%s', street='%s', city='%s', phone='%s', note='%s', pickups_less_250='%s', pickups_less_500='%s', pickups_more_500='%s', cars='%s', truck_less_3='%s', truck_less_7='%s', c1_license='%s', c1e_license='%s', crane_lic='%s', kennz95='%s', motor_mechatronics='%s', motor_foreman='%s', learned='%s', unlearned='%s', commercial='%s' WHERE id='$driverId'";
+        $sql_driver = "UPDATE $tbl_drivers SET fname='%s', lname='%s', street='%s', city='%s', phone='%s', note='%s', pickups_less_250='%s', pickups_less_500='%s', pickups_more_500='%s', cars='%s', truck_less_3='%s', truck_less_7='%s', c1_license='%s', c1e_license='%s', crane_lic='%s', kennz95='%s', motor_mechatronics='%s', motor_foreman='%s', learned='%s', unlearned='%s', commercial='%s', picture='%s' WHERE id='$driverId'";
     }
 
-    $sql_driver = sprintf($sql_driver, $coreData['fname'], $coreData['lname'], $coreData['street'], $coreData['city'], $coreData['phone'], $coreData['note'], $applicationData['pickups_less_250'], $applicationData['pickups_less_500'], $applicationData['pickups_more_500'], $applicationData['cars'], $applicationData['truck_less_3'], $applicationData['truck_less_7'], $licenseData['c1'], $licenseData['c1e'], $licenseData['crane-lic'], $licenseData['kennz95'], $qualificationData['motor_mechatronics'], $qualificationData['motor_foreman'], $qualificationData['learned'], $qualificationData['unlearned'], $qualificationData['commercial']);
+    $sql_driver = sprintf($sql_driver, $coreData['fname'], $coreData['lname'], $coreData['street'], $coreData['city'], $coreData['phone'], $coreData['note'], $applicationData['pickups_less_250'], $applicationData['pickups_less_500'], $applicationData['pickups_more_500'], $applicationData['cars'], $applicationData['truck_less_3'], $applicationData['truck_less_7'], $licenseData['c1'], $licenseData['c1e'], $licenseData['crane-lic'], $licenseData['kennz95'], $qualificationData['motor_mechatronics'], $qualificationData['motor_foreman'], $qualificationData['learned'], $qualificationData['unlearned'], $qualificationData['commercial'], $_POST['new_profile_pic']);
 
     if ($wpdb->query($sql_driver) != false) {
         $result_array['result'] = true;
@@ -590,10 +591,11 @@ function wfd_update_truck()
     $new_seats = $_POST['new_seats'];
     $new_under_lift = $_POST['new_under_lift'];
     $new_out_order = $_POST['new_out_order'];
+    $picture = $_POST['new_profile_pic'];
 
     $result_array = array();
     $tbl_truck = $wpdb->prefix . "wfd_truck_truck_truck_info";
-    $sql_update_truck = "UPDATE $tbl_truck SET cid='$cid', brand='$new_brand', weight='$new_weight', max_load='$new_max_load', load_height='$new_load_height', type='$new_truck_type', status='$new_status', plateau_height='$new_pheight', plateau_lengh='$new_plength', spectacle_force='$new_spec_force', cable_winch_force='$new_cable_force', crane='$new_crane', motorcycle='$new_motorcycle', seats='$new_seats', uder_lift='$new_under_lift', truck_ID='$new_truck_id' WHERE id='$selId'";
+    $sql_update_truck = "UPDATE $tbl_truck SET cid='$cid', brand='$new_brand', weight='$new_weight', max_load='$new_max_load', load_height='$new_load_height', type='$new_truck_type', status='$new_status', plateau_height='$new_pheight', plateau_lengh='$new_plength', spectacle_force='$new_spec_force', cable_winch_force='$new_cable_force', crane='$new_crane', motorcycle='$new_motorcycle', seats='$new_seats', uder_lift='$new_under_lift', truck_ID='$new_truck_id', picture='$picture' WHERE id='$selId'";
     if ($wpdb->query($sql_update_truck) != false) {
         $result_array['result'] = true;
         $result_array['message'] = __('Congratulate! Truck Data successfully updated!', 'wdf_truck');
@@ -2695,7 +2697,9 @@ function wfd_driver_view()
                                 </form>
                             </div>
                             <div class="col-sm-2">
-                                <img class="img-thumbnail" alt="Cinque Terre" width="200" height="150">
+                                <img src="<?php echo plugins_url('/images/truck_profile_back.jpg', __FILE__)?>" class="img-thumbnail profile-pic"
+                                     alt="Cinque Terre" width="200" height="150">
+                                <input class="file-upload" type="file" name="image" accept="image/*"/>
                                 <p class="col-sm-12"><?php _e('driver photo', 'wfd_truck'); ?></p>
                             </div>
                         </div>
@@ -3009,7 +3013,9 @@ function wfd_pickup_driver_view()
                                 </form>
                             </div>
                             <div class="col-sm-2">
-                                <img class="img-thumbnail" alt="Cinque Terre" width="200" height="150">
+                                <img src="<?php echo plugins_url('/images/truck_profile_back.jpg', __FILE__)?>" class="img-thumbnail profile-pic"
+                                     alt="Cinque Terre" width="200" height="150">
+                                <input class="file-upload" type="file" name="image" accept="image/*"/>
                                 <p class="col-sm-12"><?php _e('driver photo', 'wfd_truck'); ?></p>
                             </div>
                         </div>
@@ -3148,6 +3154,7 @@ function wfd_truck_pool_view()
                     data-truck-motorcycle="<?php echo $ti->motorcycle ?>"
                     data-truck-seats="<?php echo $ti->seats ?>"
                     data-truck-underlift="<?php echo $ti->uder_lift?>"
+                    data-truck-picture="<?php echo $ti->picture?>"
                 >
                     <td><?php echo $ti->truck_ID ?></td>
                     <td><?php echo $ti->brand ?></td>
@@ -3329,9 +3336,12 @@ function wfd_truck_pool_view()
                                                 </form>
                                             </div>
                                             <div class="col-sm-2">
-                                                <img src="wp-admin/images/truck_profile_back.jpg" class="img-thumbnail" id="profile-pic"
+                                                <img src="<?php echo plugins_url('/images/truck_profile_back.jpg', __FILE__)?>" class="img-thumbnail profile-pic"
                                                      alt="Cinque Terre" width="200" height="150">
-                                                <input id="file-upload" type="file" name="image" accept="image/*"/>
+                                                <script type="text/javascript">
+                                                    var backImgUrl = "<?php echo plugins_url('/images/truck_profile_back.jpg', __FILE__) ?>";
+                                                </script>
+                                                <input class="file-upload" type="file" name="image" accept="image/*"/>
                                                 <p class="col-sm-12"><?php _e('truck photo', 'wfd_truck'); ?></p>
 
                                                 <form>

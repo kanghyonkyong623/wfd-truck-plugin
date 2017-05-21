@@ -230,7 +230,7 @@ $(document).ready(function ($) {
         $('#new_seats').val('');
         $('#new_under_lift').val('');
         $('#new_out_order').val('');
-        $('#profile-pic').attr("src","wp-admin/images/truck_profile_back.jpg");
+        $('.profile-pic', $('#modal_add_truck')).attr("src",backImgUrl);
         $('#truckModalLabel').text('Add New Truck');
         $('#modal_add_truck').data('editMode', false);
         $('#btn_save_truck').prop('disabled', false);
@@ -281,7 +281,7 @@ $(document).ready(function ($) {
         var new_seats = $('#new_seats').val();
         var new_under_lift = $('#new_under_lift').val();
         var new_out_order = $('#new_out_order').val();
-        var new_image=$('image');
+        var new_image=$('.profile-pic', $('#modal_add_truck'));
 
         if ($.trim(new_truck_id).length == 0 || $.trim(new_brand).length == 0 || $.trim(new_truck_type).length == 0 || $.trim(new_status).length == 0 ||
             $.trim(new_weight).length == 0 || $.trim(new_max_load).length == 0 || $.trim(new_load_height).length == 0 || $.trim(new_pheight).length == 0 ||
@@ -321,6 +321,7 @@ $(document).ready(function ($) {
                     new_seats: new_seats,
                     new_under_lift: new_under_lift,
                     new_out_order: new_out_order,
+                    new_profile_pic: new_image.prop('src')
                 };
                 $.post(
                     ajax_object.ajax_url,
@@ -871,6 +872,7 @@ $(document).ready(function ($) {
         $('#new_seats').val(updateTarget.data('truckSeats'));
         $('#new_under_lift').val(updateTarget.data('truckUnderlift'));
         $('#truckModalLabel').text('Truck: ' + td[0].textContent + '-' + td[1].textContent);
+        $('.profile-pic', $('#modal_add_truck')).prop('src', updateTarget.data('truckPicture'));
         var motorcheck = updateTarget.data('truckMotorcycle');
         var $checkbox = $('#new_motorcycle');
         if (motorcheck==true){
@@ -1295,6 +1297,7 @@ $(document).ready(function ($) {
                         action: 'wfd_driver_save',
                         mode: mode,
                         driverId: driverId,
+                        new_profile_pic: $('.profile-pic', driverDlg).prop('src'),
                         coreData: JSON.stringify(coreData),
                         applicationData: JSON.stringify(appData),
                         licenseData: JSON.stringify(licenseData),
@@ -1496,6 +1499,7 @@ $(document).ready(function ($) {
         $('input[name="learned"]', targetDlg).prop('checked', driverDetails['learned_qual']== "1");
         $('input[name="unlearned"]', targetDlg).prop('checked', driverDetails['unlearned_qual']== "1");
         $('input[name="commercial"]', targetDlg).prop('checked', driverDetails['commercial_qual']== "1");
+        $('.profile-pic', targetDlg).prop('src', driverDetails['picture'] == null ? backImgUrl : driverDetails['picture']);
     }
     //endregion
 
@@ -1637,6 +1641,7 @@ $(document).ready(function ($) {
         $('input[name="learned"]', targetDlg).prop('checked', driverDetails['learned']== "1");
         $('input[name="unlearned"]', targetDlg).prop('checked', driverDetails['unlearned']== "1");
         $('input[name="commercial"]', targetDlg).prop('checked', driverDetails['commercial']== "1");
+        $('.profile-pic', targetDlg).prop('src', driverDetails['picture'] == null ? backImgUrl : driverDetails['picture']);
     }
 
     $('#pickup-driver-save').click(function (e) {
@@ -1646,7 +1651,7 @@ $(document).ready(function ($) {
 
         switch (mode){
             case "view":
-                enableDriverEdit(false);
+                enablePickupDriverEdit(false);
                 break;
             case "edit":
             case "new":
@@ -1695,6 +1700,7 @@ $(document).ready(function ($) {
                         action: 'wfd_pickup_driver_save',
                         mode: mode,
                         pickupDriverId: driverId,
+                        new_profile_pic: $('.profile-pic', driverDlg).prop('src'),
                         coreData: JSON.stringify(coreData),
                         applicationData: JSON.stringify(appData),
                         licenseData: JSON.stringify(licenseData),
@@ -1912,21 +1918,23 @@ $(document).ready(function() {
         if (input.files && input.files[0]) {
             var reader = new FileReader();
 
+            var imgTag = $('img', $(input).closest('div'));
             reader.onload = function (e) {
-                $('#profile-pic').attr('src', e.target.result);
+                imgTag.prop('src', e.target.result);
             }
 
             reader.readAsDataURL(input.files[0]);
         }
     }
 
-    $("#file-upload").on('change', function(){
+    $(".file-upload").on('change', function(){
         readURL(this);
 
     });
 
-    $("#profile-pic").on('dblclick', function(){
-        $("#file-upload").click();
+    $(".profile-pic").on('click', function(){
+
+        $(".file-upload", $(this).closest('div')).click();
     });
 });
 // $(document).ready(function(){
