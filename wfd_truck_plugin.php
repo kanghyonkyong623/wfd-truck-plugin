@@ -25,7 +25,8 @@ function plugin_init()
 
 add_action('wp_logout', wp_user_logout);
 
-function wp_user_logout(){
+function wp_user_logout()
+{
     $_SESSION['client_login'] = 'false';
     $_SESSION['client_username'] = '';
     $_SESSION['client_id'] = '';
@@ -62,21 +63,25 @@ function my_enqueue()
             'alertTitle' => __('Alert', 'wfd_truck'), 'okText' => __('OK', 'wfd_truck'),
             'successTitle' => __('Succeed', 'wfd_truck'), 'deleteConformMessage' => __('Do you confirm to delete?', 'wfd_truck'),
             'saveConformMessage' => __('Do you want to save changes of core data?', 'wfd_truck'), 'coreDataEditMode' => $_SESSION['edit_mode'],
-            'enterNewAssistanceMessage'=>__('Please enter assistance type', 'wfd_truck')));
+            'enterNewAssistanceMessage' => __('Please enter assistance type', 'wfd_truck')));
 }
 
 add_action('wp_ajax_wfd_add_client', 'wfd_add_client');
 add_action('wp_ajax_nopriv_wfd_add_client', 'wfd_add_client');
 add_action('wp_ajax_wfd_edit_client', 'wfd_edit_client');
 add_action('wp_ajax_nopriv_wfd_edit_client', 'wfd_edit_client');
-add_action('wp_ajax_wfd_update_driver', 'wfd_update_driver');
-add_action('wp_ajax_nopriv_wfd_update_driver', 'wfd_update_driver');
+add_action('wp_ajax_wfd_driver_save', 'wfd_driver_save');
+add_action('wp_ajax_nopriv_wfd_driver_save', 'wfd_driver_save');
 add_action('wp_ajax_wfd_update_client', 'wfd_update_client');
 add_action('wp_ajax_nopriv_wfd_update_client', 'wfd_update_client');
 add_action('wp_ajax_wfd_delete_client', 'wfd_delete_client');
 add_action('wp_ajax_nopriv_wfd_delete_client', 'wfd_delete_client');
 add_action('wp_ajax_wfd_truck_save_core', 'wfd_truck_save_core');
 add_action('wp_ajax_nopriv_wfd_truck_save_core', 'wfd_truck_save_core');
+add_action('wp_ajax_wfd_get_driver_detail', 'wfd_get_driver_detail');
+add_action('wp_ajax_nopriv_wfd_get_driver_detail', 'wfd_get_driver_detail');
+add_action('wp_ajax_wfd_delete_driver', 'wfd_delete_driver');
+add_action('wp_ajax_nopriv_wfd_delete_driver', 'wfd_delete_driver');
 
 function wfd_add_client()
 {
@@ -202,25 +207,71 @@ function wfd_update_client()
     wp_die();
 }
 
-function wfd_update_driver()
+function wfd_driver_save()
+{
+    global $wpdb;
+    $clientId = $_SESSION['client_id'];
+    $driverId = $_POST['driverId'];
+    $coreData = json_decode(stripslashes($_POST['coreData']), true);
+    $applicationData = json_decode(stripslashes($_POST['applicationData']), true);
+    $licenseData = json_decode(stripslashes($_POST['licenseData']), true);
+    $qualificationData = json_decode(stripslashes($_POST['qualificationData']), true);
+
+    $errorMessages = array();
+    $errorQueries = array();
+
+    $tbl_drivers = $wpdb->prefix . "wfd_truck_driver_info";
+
+    if ($_POST['mode'] == 'new') {
+        $sql_driver = "INSERT INTO $tbl_drivers (`fname`, `lname`, `street`, `city`, `phone`, `note`, `type`, `cid`, `breakdown_rating`, `dragcar_rating`, `dragless_rating`, `dragmore_rating`, `crane_rating`, `truckservice_rating`, `c1_license`, `c1e_license`, `crane_license`, `kennz_license`, `clubmobile_license`, `caropening_license`, `motormech_qual`, `motorfore_qual`, `learned_qual`, `unlearned_qual`, `commercial_qual`) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', 'Driver', '$clientId', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')";
+    } else {
+        $sql_driver = "UPDATE $tbl_drivers SET fname='%s', lname='%s', street='%s', city='%s', phone='%s', note='%s', breakdown_rating='%s', dragcar_rating='%s', dragless_rating='%s', dragmore_rating='%s', crane_rating='%s', truckservice_rating='%s', c1_license='%s', c1e_license='%s', crane_license='%s', kennz_license='%s', clubmobile_license='%s', caropening_license='%s', motormech_qual='%s', motorfore_qual='%s', learned_qual='%s', unlearned_qual='%s', commercial_qual='%s' WHERE id='$driverId'";
+    }
+
+    $sql_driver = sprintf($sql_driver, $coreData['fname'], $coreData['lname'], $coreData['street'], $coreData['city'], $coreData['phone'], $coreData['note'], $applicationData['breakdown'], $applicationData['drag-cars'], $applicationData['drag-less-7'], $applicationData['drag-more-7'], $applicationData['crane'], $applicationData['truck-service'], $licenseData['c1'], $licenseData['c1e'], $licenseData['crane-lic'], $licenseData['kennz95'], $licenseData['club-mobil'], $licenseData['car-opening'], $qualificationData['motor-mechatronics'], $qualificationData['motor-foreman'], $qualificationData['learned'], $qualificationData['unlearned'], $qualificationData['commercial']);
+
+    if ($wpdb->query($sql_driver) != false) {
+        $result_array['result'] = true;
+        $result_array['message'] = __('Driver information successfully updated!', 'wfd_truck');
+        $result_array['driverId'] = $wpdb->insert_id;
+    } else {
+        $result_array['result'] = false;
+        $result_array['errorMessage'] = $wpdb->last_error;
+        $result_array['query'] = $sql_driver;
+    }
+
+    echo json_encode($result_array);
+    wp_die();
+}
+
+function wfd_get_driver_detail(){
+    global $wpdb;
+    try {
+        $driverId = $_POST['driverId'];
+        $tbl_driver_info = $wpdb->prefix . "wfd_truck_driver_info";
+        $sql_driver_detail = "SELECT * FROM $tbl_driver_info WHERE `id`='$driverId'";
+        $res_driver = $wpdb->get_results($sql_driver_detail, OBJECT);
+        if (count($res_driver) > 0) {
+            echo json_encode($res_driver[0]);
+        } else {
+            echo json_encode(array('error' => $wpdb->last_error));
+        }
+    } catch (Exception $e) {
+        echo $e->getMessage();
+    }
+    wp_die();
+}
+
+function wfd_delete_driver()
 {
     global $wpdb;
     $driverId = $_POST['driverId'];
-    $firstName = $_POST['firstName'];
-    $lastName = $_POST['lastName'];
-    $street = $_POST['street'];
-    $city = $_POST['city'];
-    $phone = $_POST['phone'];
-    $note = $_POST['note'];
-
-    $result_array = array();
-    $tbl_wp_users = $wpdb->users;
 
     $tbl_drivers = $wpdb->prefix . "wfd_truck_driver_info";
-    $sql_update_driver = "UPDATE $tbl_drivers SET fname='$firstName', lname='$lastName', street='$street', city='$city', phone='$phone', note='$note' WHERE id='$driverId'";
-    if ($wpdb->query($sql_update_driver) != false) {
+    $sql_delete_driver = "DELETE FROM $tbl_drivers WHERE id='$driverId'";
+    if ($wpdb->query($sql_delete_driver) != false) {
         $result_array['result'] = true;
-        $result_array['message'] = __('Driver information successfully updated!', 'wfd_truck');
+        $result_array['message'] = __('Driver Data successfully deleted!', 'wfd_truck');
     } else {
         $result_array['result'] = false;
         $result_array['errorMessage'] = $wpdb->last_error;
@@ -228,9 +279,11 @@ function wfd_update_driver()
 
     echo json_encode($result_array);
     wp_die();
+
 }
 
-function wfd_truck_save_core(){
+function wfd_truck_save_core()
+{
     global $wpdb;
     $errorMessages = array();
     $errorQueries = array();
@@ -238,14 +291,14 @@ function wfd_truck_save_core(){
     $clientId = $core_info['clientId'];
 
     //region Core Info
-    $tbl_client_info = $wpdb->prefix.'wfd_truck_client_info';
+    $tbl_client_info = $wpdb->prefix . 'wfd_truck_client_info';
     $company = $core_info['company'];
     $street = $core_info['street'];
     $zip = $core_info['zip'];
     $city = $core_info['city'];
     $phone = $core_info['phone'];
     $fax = $core_info['fax'];
-    $website=$core_info['website'];
+    $website = $core_info['website'];
     $emergency = $core_info['emergencyPhone'];
     $note = $core_info['note'];
 
@@ -259,7 +312,7 @@ function wfd_truck_save_core(){
 
     //region Opening Hours
 
-    $tbl_opening_hours = $wpdb->prefix.'wfd_truck_operating_hours';
+    $tbl_opening_hours = $wpdb->prefix . 'wfd_truck_operating_hours';
     $opening_hours_info = json_decode(stripslashes($_POST['openHours']), true);
     $remove_sql = "DELETE FROM $tbl_opening_hours WHERE cid='$clientId'";
     $wpdb->query($remove_sql);
@@ -295,13 +348,13 @@ function wfd_truck_save_core(){
 
     //region Payment
     $payment = json_decode(stripslashes($_POST['payment']), true);
-    $tbl_pay_m = $wpdb->prefix."wfd_truck_pay_m";
-    $tbl_pay_m_u = $wpdb->prefix."wfd_truck_truck_pay_m_u";
+    $tbl_pay_m = $wpdb->prefix . "wfd_truck_pay_m";
+    $tbl_pay_m_u = $wpdb->prefix . "wfd_truck_truck_pay_m_u";
     $sql_pay_insert_temp = "INSERT INTO $tbl_pay_m_u (payid, cid) SELECT p.id, '%s' FROM $tbl_pay_m p WHERE method='%s';";
     $sql_delete_pay = "DELETE FROM $tbl_pay_m_u WHERE cid='$clientId'";
     $wpdb->query($sql_delete_pay);
 
-    foreach ($payment as $method){
+    foreach ($payment as $method) {
         $sql_pay_insert = sprintf($sql_pay_insert_temp, $clientId, $method);
         if ($wpdb->query($sql_pay_insert) == false) {
             array_push($errorMessages, $wpdb->last_error);
@@ -312,13 +365,13 @@ function wfd_truck_save_core(){
 
     //region Partner
     $partner = json_decode(stripslashes($_POST['partner']), true);
-    $tbl_partner_m = $wpdb->prefix."wfd_truck_truck_partner";
-    $tbl_partner_m_u = $wpdb->prefix."wfd_truck_truck_partner_u";
+    $tbl_partner_m = $wpdb->prefix . "wfd_truck_truck_partner";
+    $tbl_partner_m_u = $wpdb->prefix . "wfd_truck_truck_partner_u";
     $sql_partner_insert_temp = "INSERT INTO $tbl_partner_m_u (pid, cid) SELECT p.id, '%s' FROM $tbl_partner_m p WHERE partner='%s';";
     $sql_delete_partner = "DELETE FROM $tbl_partner_m_u WHERE cid='$clientId'";
     $wpdb->query($sql_delete_partner);
 
-    foreach ($partner as $method){
+    foreach ($partner as $method) {
         $sql_partner_insert = sprintf($sql_partner_insert_temp, $clientId, $method);
         if ($wpdb->query($sql_partner_insert) == false) {
             array_push($errorMessages, $wpdb->last_error);
@@ -329,23 +382,23 @@ function wfd_truck_save_core(){
 
     //region Assistance
     $assistance = json_decode(stripslashes($_POST['assistance']), true);
-    $tbl_assistance = $wpdb->prefix."wfd_truck_assistance";
-    $tbl_assistance_u = $wpdb->prefix."wfd_truck_assistance_u";
+    $tbl_assistance = $wpdb->prefix . "wfd_truck_assistance";
+    $tbl_assistance_u = $wpdb->prefix . "wfd_truck_assistance_u";
     $assistance_values = $wpdb->get_results("SELECT * FROM $tbl_assistance", OBJECT);
 
     $sql_assistance_insert_temp = "INSERT INTO $tbl_assistance_u (aid, cid) SELECT p.id, '%s' FROM $tbl_assistance p WHERE assistance='%s';";
     $sql_delete_partner = "DELETE FROM $tbl_assistance_u WHERE cid='$clientId'";
     $wpdb->query($sql_delete_partner);
 
-    foreach ($assistance as $method){
+    foreach ($assistance as $method) {
         $is_new = true;
-        foreach ($assistance_values as $ass){
-            if($ass->assistance == $method){
+        foreach ($assistance_values as $ass) {
+            if ($ass->assistance == $method) {
                 $is_new = false;
                 break;
             }
         }
-        if($is_new == true){
+        if ($is_new == true) {
             $wpdb->query("INSERT INTO $tbl_assistance (`assistance`) VALUES('$method')");
         }
         $sql_assistance_insert = sprintf($sql_assistance_insert_temp, $clientId, $method);
@@ -358,7 +411,7 @@ function wfd_truck_save_core(){
 
     //region Mobi Service
     $mobi = json_decode(stripslashes($_POST['mobi']), true);
-    $tbl_mobi = $wpdb->prefix."wfd_truck_mobi_service";
+    $tbl_mobi = $wpdb->prefix . "wfd_truck_mobi_service";
 
     $wpdb->query("DELETE FROM $tbl_mobi WHERE cid='$clientId'");
 
@@ -389,15 +442,14 @@ function wfd_truck_save_core(){
 function wfd_truck_settings_fn()
 {
     global $wpdb;
-    $tbl_urls = $wpdb->prefix."wfd_client_page";
+    $tbl_urls = $wpdb->prefix . "wfd_client_page";
     $client_page_urls = $wpdb->get_results("SELECT * FROM $tbl_urls");
-    if(isset($_POST['client-page'])){
-        if(count($client_page_urls) > 0){
+    if (isset($_POST['client-page'])) {
+        if (count($client_page_urls) > 0) {
             $page_id = $client_page_urls[0]->Id;
-            $wpdb->query("UPDATE $tbl_urls SET `url`='".$_POST['client-page']."' WHERE `Id`=$page_id");
-        }
-        else{
-            $wpdb->query("INSERT INTO $tbl_urls (`url`) VALUES ('".$_POST['client-page']."')");
+            $wpdb->query("UPDATE $tbl_urls SET `url`='" . $_POST['client-page'] . "' WHERE `Id`=$page_id");
+        } else {
+            $wpdb->query("INSERT INTO $tbl_urls (`url`) VALUES ('" . $_POST['client-page'] . "')");
         }
         $client_page_urls = $wpdb->get_results("SELECT * FROM $tbl_urls");
 
@@ -409,28 +461,28 @@ function wfd_truck_settings_fn()
         <form method="post">
             <table class="form-table">
                 <tr>
-                    <th scope="row"><label ><?php _e('Select Client page', 'wfd_truck'); ?></label></th>
+                    <th scope="row"><label><?php _e('Select Client page', 'wfd_truck'); ?></label></th>
                     <td><select name="client-page" id="select-client-page" style="width: 15%;">
 
-                        <?php
-                        $pages = get_pages();
-                        foreach ($pages as $page) {
-                            if(count($client_page_urls) > 0 && $client_page_urls[0]->url == get_page_link($page->ID)){
-                                $option = '<option value="' . get_page_link($page->ID) . '" selected>';
+                            <?php
+                            $pages = get_pages();
+                            foreach ($pages as $page) {
+                                if (count($client_page_urls) > 0 && $client_page_urls[0]->url == get_page_link($page->ID)) {
+                                    $option = '<option value="' . get_page_link($page->ID) . '" selected>';
+                                } else {
+                                    $option = '<option value="' . get_page_link($page->ID) . '">';
+                                }
+                                $option .= $page->post_title;
+                                $option .= '</option>';
+                                echo $option;
                             }
-                            else{
-                                $option = '<option value="' . get_page_link($page->ID) . '">';
-                            }
-                            $option .= $page->post_title;
-                            $option .= '</option>';
-                            echo $option;
-                        }
-                        ?>
+                            ?>
                         </select></td>
                 </tr>
             </table>
             <p class="submit">
-                <input type="submit" class="button button-primary" id="settings-save" value="<?php _e('Save Changes', 'wfd_truck'); ?>">
+                <input type="submit" class="button button-primary" id="settings-save"
+                       value="<?php _e('Save Changes', 'wfd_truck'); ?>">
             </p>
         </form>
     </div>
@@ -802,7 +854,7 @@ function wfd_truck_init_fn()
         }
     }
 
-    if(isset($_POST['admin'])){
+    if (isset($_POST['admin'])) {
         $clientId = $_POST['client_id'];
         $editMode = $_POST['edit_mode'];
         $res_client_info = $wpdb->get_results("select * from $tbl_client_info where id='$clientId'", OBJECT);
@@ -936,6 +988,10 @@ function wfd_ref_truck_plugin_activation()
 
     global $wpdb;
     $charset_collate = $wpdb->get_charset_collate();
+
+    $tbl_client_page = $wpdb->prefix . "wfd_client_page";
+    $sql_client_page = "CREATE TABLE `$tbl_client_page` (`Id` int(11) NOT NULL AUTO_INCREMENT, `pagename` varchar(255) DEFAULT '', `url` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`Id`)) $charset_collate;";
+    dbDelta($sql_client_page);
 
     $tbl_pay_m = $wpdb->prefix . "wfd_truck_pay_m";
     $sql_pay_m = "CREATE TABLE IF NOT EXISTS $tbl_pay_m (
@@ -1181,13 +1237,12 @@ function wfd_admin_view_as_wp_menu()
     $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
     $res_client_list = $wpdb->get_results("select * from $tbl_client_info", OBJECT);
 
-    $tbl_client_view_url = $wpdb->prefix."wfd_client_page";
+    $tbl_client_view_url = $wpdb->prefix . "wfd_client_page";
     $res_client_view_url = $wpdb->get_results("SELECT * FROM $tbl_client_view_url", OBJECT);
 
-    if(count($res_client_view_url) > 0){
+    if (count($res_client_view_url) > 0) {
         $nav_url = $res_client_view_url[0]->url;
-    }
-    else{
+    } else {
         $nav_url = menu_page_url('wfd_truck_settings');
     }
     my_enqueue();
@@ -1235,7 +1290,8 @@ function wfd_admin_view_as_wp_menu()
                 <?php
 
                 foreach ($res_client_list as $client) { ?>
-                    <tr data-user-id="<?php echo $client->id ?>" data-user-name="<?php echo $client->username ?>" data-email-address="<?php echo $client->email ?>" data-word="<?php echo $client->password ?>">
+                    <tr data-user-id="<?php echo $client->id ?>" data-user-name="<?php echo $client->username ?>"
+                        data-email-address="<?php echo $client->email ?>" data-word="<?php echo $client->password ?>">
                         <td><?php echo $client->company ?></td>
                         <td><?php echo $client->street ?></td>
                         <td><?php echo $client->zip ?></td>
@@ -1705,7 +1761,8 @@ function wfd_core_data_view($res_client_info)
                     <label class="control-label col-sm-6"
                            style="padding-left: 40px;line-height: 30px;"><?php _e('Street', 'wfd_truck') ?></label>
                     <div class="col-sm-6">
-                        <input type="text" class="form-control" disabled name="street" value="<?php echo $r1->street ?>">
+                        <input type="text" class="form-control" disabled name="street"
+                               value="<?php echo $r1->street ?>">
                     </div>
                 </div>
                 <div class="row form-group">
@@ -1765,7 +1822,7 @@ function wfd_core_data_view($res_client_info)
                     </div>
                 </div>
                 <div class="row form-group">
-                    <input class="col-sm-6" hidden name="clientId" value="<?php echo $id ?>">
+                    <input id="client-id" class="col-sm-6" hidden name="clientId" value="<?php echo $id ?>">
                     <div class="col-sm-6">
                         <button class="btn btn-primary" type="button" data-toggle="button"
                                 id="edit-core-data-toggle"><span
@@ -2075,15 +2132,21 @@ function wfd_driver_view()
     $id = $_SESSION['client_id'];
     $tbl_driver_info = $wpdb->prefix . "wfd_truck_driver_info";
     $res_driver = $wpdb->get_results("select * from $tbl_driver_info where cid=$id and type='Driver'", OBJECT);
-
-
     ?>
     <div role="tabpanel" class="tab-pane" id="driver">
         <h2><?php _e('Driver', 'wfd_truck'); ?></h2>
-        <table class="table table-striped dataTable">
+        <table class="table table-striped dataTable" id="drivers-table">
+            <colgroup>
+                <col class="col-md-2">
+                <col class="col-md-2">
+                <col class="col-md-2">
+                <col class="col-md-2">
+                <col class="col-md-2">
+                <col class="col-md-2">
+                <col class="col-md-3">
+            </colgroup>
             <thead>
             <tr>
-                <th><?php _e('Sl#', 'wfd_truck'); ?></th>
                 <th><?php _e('First Name', 'wfd_truck'); ?></th>
                 <th><?php _e('Last Name', 'wfd_truck'); ?></th>
                 <th><?php _e('Street', 'wfd_truck'); ?></th>
@@ -2098,9 +2161,7 @@ function wfd_driver_view()
             $r = 1;
             foreach ($res_driver as $rd) {
                 ?>
-                <tr driver-id="<?php echo $rd->id ?>">
-                    <td><?php echo $r;
-                        $r++; ?></td>
+                <tr data-driver-id="<?php echo $rd->id ?>">
                     <td><?php echo $rd->fname ?></td>
                     <td><?php echo $rd->lname ?></td>
                     <td><?php echo $rd->street ?></td>
@@ -2108,854 +2169,17 @@ function wfd_driver_view()
                     <td><?php echo $rd->phone ?></td>
                     <td><?php echo $rd->note ?></td>
                     <td>
-                        <button type="button" class="btn btn-link" data-toggle="modal"
-                                data-target="#mdview_<?php echo $rd->id ?>"><?php _e('', 'wfd_truck'); ?>
-                            <?php _e('View', 'wfd_truck'); ?>
-                        </button>
-                        ||
-                        <button type="button" class="btn btn-link" data-toggle="modal"
-                                data-target="#mdedit_<?php echo $rd->id ?>"><?php _e('', 'wfd_truck'); ?>
-                            <?php _e('Edit', 'wfd_truck'); ?>
-                        </button>
-                        ||
-                        <button type="button" class="btn btn-link" data-toggle="modal"
-                                data-target="#mdnew_<?php echo $rd->id ?>"><?php _e('', 'wfd_truck'); ?>
-                            <?php _e('New', 'wfd_truck'); ?>
-                        </button>
-                        ||
-                        <button type="button" class="btn btn-link" data-toggle="modal"
-                                data-target="#mdcopy_<?php echo $rd->id ?>"><?php _e('', 'wfd_truck'); ?>
-                            <?php _e('Copy', 'wfd_truck'); ?>
-                        </button>
-
-                        <!-- Modal View-->
-                        <div class="modal fade" id="mdview_<?php echo $rd->id ?>"
-                             data-driver-id="<?php echo $rd->id ?>" tabindex="-1" role="dialog"
-                             aria-labelledby="myModalLabel">
-                            <div style="width: 60%" class="modal-dialog" role="document"
-                                 data-driver-id="<?php echo $rd->id ?>">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <button type="button" class="close" data-dismiss="modal"
-                                                aria-label="Close"><span
-                                                    aria-hidden="true">&times;</span></button>
-                                        <h4 class="modal-title" id="myModalLabel">
-                                            <?php _e('Driver:', 'wfd_truck'); ?><?php echo $rd->fname ?><?php echo $rd->lname ?></h4>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="row">
-                                            <div class="col-sm-5">
-                                                <h2><?php _e('Core Data', 'wfd_truck'); ?></h2>
-                                                <form class="form-horizontal" action="#">
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('First Name', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="fname"
-                                                                   value=<?php echo $rd->fname ?>>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Last Name', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="lname"
-                                                                   value=<?php echo $rd->lname ?>>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Street', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="street"
-                                                                   value=<?php echo $rd->street ?>>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('City', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="city"
-                                                                   value=<?php echo $rd->city ?>>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Phone', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="phone"
-                                                                   value=<?php echo $rd->phone ?>>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Note', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="note"
-                                                                   value=<?php echo $rd->note ?>>
-                                                        </div>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                            <div class="col-sm-1"></div>
-                                            <div class="col-sm-4">
-                                                <h2><?php _e('Applications', 'wfd_truck'); ?></h2>
-                                                <form class="form-horizontal" action="#">
-                                                    <div class="form-group">
-                                                        <label class="col-sm-5"><?php _e('breakdown service', 'wfd_truck'); ?></label>
-                                                        <div class="col-sm-7"><input
-                                                                    id="input-21d" value="2"
-                                                                    type="text"
-                                                                    class="rating col-sm-6"
-                                                                    data-min=0 data-max=5
-                                                                    data-step=0.5 data-size="xs"
-                                                                    data-show-caption=false
-                                                                    title=""></div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="col-sm-5"><?php _e('drag cars', 'wfd_truck'); ?></label>
-                                                        <input id="input-21d" value="2"
-                                                               type="text"
-                                                               class="rating col-sm-6"
-                                                               data-min=0 data-max=5
-                                                               data-step=0.5 data-size="xs"
-                                                               data-show-caption=false
-                                                               title="">
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="col-sm-5"><?php _e('drag < 7.5to', 'wfd_truck'); ?></label>
-                                                        <div class="col-sm-7"><input
-                                                                    id="input-21d" value="2"
-                                                                    type="text"
-                                                                    class="rating col-sm-6"
-                                                                    data-min=0 data-max=5
-                                                                    data-step=0.5 data-size="xs"
-                                                                    data-show-caption=false
-                                                                    title=""></div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="col-sm-5"><?php _e('drag > 7.5to', 'wfd_truck'); ?></label>
-                                                        <div class="col-sm-7"><input
-                                                                    id="input-21d" value="2"
-                                                                    type="text"
-                                                                    class="rating col-sm-6"
-                                                                    data-min=0 data-max=5
-                                                                    data-step=0.5 data-size="xs"
-                                                                    data-show-caption=false
-                                                                    title=""></div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="col-sm-5"><?php _e('crane', 'wfd_truck'); ?></label>
-                                                        <div class="col-sm-7"><input
-                                                                    id="input-21d" value="2"
-                                                                    type="text"
-                                                                    class="rating col-sm-6"
-                                                                    data-min=0 data-max=5
-                                                                    data-step=0.5 data-size="xs"
-                                                                    data-show-caption=false
-                                                                    title=""></div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="col-sm-5"><?php _e('truck service', 'wfd_truck'); ?></label>
-                                                        <div class="col-sm-7"><input
-                                                                    id="input-21d" value="2"
-                                                                    type="text"
-                                                                    class="rating col-sm-6"
-                                                                    data-min=0 data-max=5
-                                                                    data-step=0.5 data-size="xs"
-                                                                    data-show-caption=false
-                                                                    title=""></div>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                            <div class="col-sm-2">
-                                                <img src="wp-admin/images/4.jpg"
-                                                     class="img-thumbnail" alt="Cinque Terre"
-                                                     width="200" height="150">
-                                                <p class="col-sm-12"><?php _e('driver photo', 'wfd_truck'); ?></p>
-                                            </div>
-                                        </div>
-                                        <div cla="row">
-                                            <div class="col-sm-6">
-                                                <h2><?php _e('Driving Licences', 'wfd_truck'); ?></h2>
-                                                <form>
-                                                    <div class="col-sm-4">
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""
-                                                                          checked><?php _e('C1', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""
-                                                                          checked><?php _e('C1E', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox disabled">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('crane', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-sm-4">
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('Kennz 95', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""
-                                                                          checked><?php _e('Clubmobil', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox disabled">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('car opening', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                            <div class="col-sm-6">
-                                                <h2><?php _e('Qualification', 'wfd_truck'); ?></h2>
-                                                <form>
-                                                    <div class="checkbox">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('motor mechatronics', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox">
-                                                        <label><input type="checkbox" value=""
-                                                                      checked><?php _e('motor foreman', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox disabled">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('learned', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox disabled">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('unlearned', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox disabled">
-                                                        <label><input type="checkbox" value=""
-                                                                      checked><?php _e('commerical vehicle technology', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-primary">
-                                            <span class="glyphicon glyphicon-pencil"></span> <?php _e('Edit', 'wfd_truck'); ?>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="btn-group-driver">
+                            <button type="button" class="btn btn-primary btn-sm btn-driver-view"><span class="glyphicon glyphicon-th-list"></span>
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm btn-driver-edit"><span class="glyphicon glyphicon-pencil"></span>
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm btn-driver-delete"><span class="glyphicon glyphicon-remove"></span>
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm btn-driver-copy"><span class="glyphicon glyphicon-asterisk"></span>
+                            </button>
                         </div>
-                        <!-- Modal Edit-->
-                        <div class="modal fade" id="mdedit_<?php echo $rd->id ?>" tabindex="-1"
-                             role="dialog" aria-labelledby="myModalLabel"
-                             data-driver-id="<?php echo $rd->id ?>">
-                            <div style="width: 60%" class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div style="background-color: #5cb85c; color: white !important;"
-                                         class="modal-header">
-                                        <button type="button" class="close" data-dismiss="modal"
-                                                aria-label="Close"><span
-                                                    aria-hidden="true">&times;</span></button>
-                                        <h4 class="modal-title" id="myModalLabel">
-                                            <?php _e('Driver:', 'wfd_truck'); ?><?php echo $rd->fname ?><?php echo $rd->lname ?></h4>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="row">
-                                            <div class="col-sm-5">
-                                                <h2><?php _e('Core Data', 'wfd_truck'); ?></h2>
-                                                <form class="form-horizontal" action="#">
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('First Name', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="fname"
-                                                                   value=<?php echo $rd->fname ?>>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Last Name', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="lname"
-                                                                   value=<?php echo $rd->lname ?>>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Street', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="street"
-                                                                   value=<?php echo $rd->street ?>>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('City', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="city"
-                                                                   value=<?php echo $rd->city ?>>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Phone', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="phone"
-                                                                   value=<?php echo $rd->phone ?>>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Note', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="note"
-                                                                   value=<?php echo $rd->note ?>>
-                                                        </div>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                            <div class="col-sm-1"></div>
-                                            <div class="col-sm-4">
-                                                <h2><?php _e('Applications', 'wfd_truck'); ?></h2>
-                                                <form class="form-horizontal" action="#">
-                                                    <div class="form-group">
-                                                        <label><?php _e('breakdown service', 'wfd_truck'); ?></label>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('drag cars', 'wfd_truck'); ?></label>
 
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('drag < 7.5to', 'wfd_truck'); ?></label>
-
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('drag > 7.5to', 'wfd_truck'); ?></label>
-
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('crane', 'wfd_truck'); ?></label>
-
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('truck service', 'wfd_truck'); ?></label>
-
-                                                    </div>
-                                                </form>
-                                            </div>
-                                            <div class="col-sm-2">
-                                                <img src="wp-admin/images/4.jpg"
-                                                     class="img-thumbnail" alt="Cinque Terre"
-                                                     width="200" height="150">
-                                                <p class="col-sm-12"><?php _e('driver photo', 'wfd_truck'); ?></p>
-                                            </div>
-                                        </div>
-                                        <div cla="row">
-                                            <div class="col-sm-6">
-                                                <h2><?php _e('Driving Licences', 'wfd_truck'); ?></h2>
-                                                <form>
-                                                    <div class="col-sm-4">
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""
-                                                                          checked><?php _e('C1', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""
-                                                                          checked><?php _e('C1E', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox disabled">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('crane', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-sm-4">
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('Kennz 95', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""
-                                                                          checked><?php _e('Clubmobil', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox disabled">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('car opening', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                            <div class="col-sm-6">
-                                                <h2><?php _e('Qualification', 'wfd_truck'); ?></h2>
-                                                <form>
-                                                    <div class="checkbox">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('motor mechatronics', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox">
-                                                        <label><input type="checkbox" value=""
-                                                                      checked><?php _e('motor foreman', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox disabled">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('learned', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox disabled">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('unlearned', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox disabled">
-                                                        <label><input type="checkbox" value=""
-                                                                      checked><?php _e('commerical vehicle technology', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="submit"
-                                                class="btn btn-primary btn-driver-save">
-                                            <span class="glyphicon glyphicon-floppy-disk"></span> <?php _e('Save', 'wfd_truck'); ?>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Modal New-->
-                        <div class="modal fade" id="mdnew_<?php echo $rd->id ?>"
-                             data-driver-id="<?php echo $rd->id ?>" tabindex="-1" role="dialog"
-                             aria-labelledby="myModalLabel">
-                            <div style="width: 60%" class="modal-dialog" role="document"
-                                 data-driver-id="<?php echo $rd->id ?>">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <button type="button" class="close" data-dismiss="modal"
-                                                aria-label="Close"><span
-                                                    aria-hidden="true">&times;</span></button>
-                                        <h4 class="modal-title" id="myModalLabel">
-                                            <?php _e('Driver:', 'wfd_truck'); ?><?php echo $rd->fname ?><?php echo $rd->lname ?></h4>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="row">
-                                            <div class="col-sm-5">
-                                                <h2><?php _e('Core Data', 'wfd_truck'); ?></h2>
-                                                <form class="form-horizontal" action="#">
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('First Name', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="fname" value="">
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Last Name', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="lname" value="">
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Street', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="street" value="">
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('City', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="city" value="">
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Phone', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="phone" value="">
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Note', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="note" value="">
-                                                        </div>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                            <div class="col-sm-1"></div>
-                                            <div class="col-sm-4">
-                                                <h2><?php _e('Applications', 'wfd_truck'); ?></h2>
-                                                <form class="form-horizontal" action="#">
-                                                    <div class="form-group">
-                                                        <label><?php _e('breakdown service', 'wfd_truck'); ?></label>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('drag cars', 'wfd_truck'); ?></label>
-
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('drag < 7.5to', 'wfd_truck'); ?></label>
-
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('drag > 7.5to', 'wfd_truck'); ?></label>
-
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('crane', 'wfd_truck'); ?></label>
-
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('truck service', 'wfd_truck'); ?></label>
-
-                                                    </div>
-                                                </form>
-                                            </div>
-                                            <div class="col-sm-2">
-                                                <img src="wp-admin/images/4.jpg"
-                                                     class="img-thumbnail" alt="Cinque Terre"
-                                                     width="200" height="150">
-                                                <p class="col-sm-12"><?php _e('driver photo', 'wfd_truck'); ?></p>
-                                            </div>
-                                        </div>
-                                        <div cla="row">
-                                            <div class="col-sm-6">
-                                                <h2><?php _e('Driving Licences', 'wfd_truck'); ?></h2>
-                                                <form>
-                                                    <div class="col-sm-4">
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('C1', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('C1E', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox disabled">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('crane', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-sm-4">
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('Kennz 95', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('Clubmobil', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox disabled">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('car opening', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                            <div class="col-sm-6">
-                                                <h2><?php _e('Qualification', 'wfd_truck'); ?></h2>
-                                                <form>
-                                                    <div class="checkbox">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('motor mechatronics', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('motor foreman', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox disabled">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('learned', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox disabled">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('unlearned', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox disabled">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('commerical vehicle technology', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="submit" class="btn btn-primary">
-                                            <span class="glyphicon glyphicon-floppy-disk"></span> <?php _e('Save', 'wfd_truck'); ?>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Modal Copy-->
-                        <div class="modal fade" id="mdcopy_<?php echo $rd->id ?>"
-                             data-driver-id="<?php echo $rd->id ?>" tabindex="-1" role="dialog"
-                             aria-labelledby="myModalLabel">
-                            <div style="width: 60%" class="modal-dialog" role="document"
-                                 data-driver-id="<?php echo $rd->id ?>">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <button type="button" class="close" data-dismiss="modal"
-                                                aria-label="Close"><span
-                                                    aria-hidden="true">&times;</span></button>
-                                        <h4 class="modal-title" id="myModalLabel">
-                                            <?php _e('Driver:', 'wfd_truck'); ?><?php echo $rd->fname ?><?php echo $rd->lname ?></h4>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="row">
-                                            <div class="col-sm-5">
-                                                <h2><?php _e('Core Data', 'wfd_truck'); ?></h2>
-                                                <form class="form-horizontal" action="#">
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('First Name', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="fname" value="">
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Last Name', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="lname" value="">
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Street', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="street" value="">
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('City', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="city" value="">
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Phone', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="phone" value="">
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="control-label col-sm-5"><?php _e('Note', 'wfd_truck'); ?>
-                                                            :</label>
-                                                        <div class="col-sm-7">
-                                                            <input type="text"
-                                                                   class="form-control"
-                                                                   name="note" value="">
-                                                        </div>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                            <div class="col-sm-1"></div>
-                                            <div class="col-sm-4">
-                                                <h2><?php _e('Applications', 'wfd_truck'); ?></h2>
-                                                <form class="form-horizontal" action="#">
-                                                    <div class="form-group">
-                                                        <label><?php _e('breakdown service', 'wfd_truck'); ?></label>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('drag cars', 'wfd_truck'); ?></label>
-
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('drag < 7.5to', 'wfd_truck'); ?></label>
-
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('drag > 7.5to', 'wfd_truck'); ?></label>
-
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('crane', 'wfd_truck'); ?></label>
-
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label><?php _e('truck service', 'wfd_truck'); ?></label>
-
-                                                    </div>
-                                                </form>
-                                            </div>
-                                            <div class="col-sm-2">
-                                                <img src="wp-admin/images/4.jpg"
-                                                     class="img-thumbnail" alt="Cinque Terre"
-                                                     width="200" height="150">
-                                                <p class="col-sm-12"><?php _e('driver photo', 'wfd_truck'); ?></p>
-                                            </div>
-                                        </div>
-                                        <div cla="row">
-                                            <div class="col-sm-6">
-                                                <h2><?php _e('Driving Licences', 'wfd_truck'); ?></h2>
-                                                <form>
-                                                    <div class="col-sm-4">
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('C1', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('C1E', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox disabled">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('crane', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-sm-4">
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('Kennz 95', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('Clubmobil', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                        <div class="checkbox disabled">
-                                                            <label><input type="checkbox"
-                                                                          value=""><?php _e('car opening', 'wfd_truck'); ?>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                            <div class="col-sm-6">
-                                                <h2><?php _e('Qualification', 'wfd_truck'); ?></h2>
-                                                <form>
-                                                    <div class="checkbox">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('motor mechatronics', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('motor foreman', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox disabled">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('learned', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox disabled">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('unlearned', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                    <div class="checkbox disabled">
-                                                        <label><input type="checkbox"
-                                                                      value=""><?php _e('commerical vehicle technology', 'wfd_truck'); ?>
-                                                        </label>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="submit" class="btn btn-primary">
-                                            <span class="glyphicon glyphicon-floppy-disk"></span> <?php _e('Save', 'wfd_truck'); ?>
-                                        </button>
-                                        <button type="button" class="btn btn-primary">
-                                            <span class="glyphicon glyphicon-download-alt"></span> <?php _e('Paste', 'wfd_truck'); ?>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </td>
                 </tr>
             <?php } ?>
@@ -2964,109 +2188,251 @@ function wfd_driver_view()
         </table>
 
 
-        <button class="btn btn-primary" type="button" data-toggle="collapse"
-                data-target="#newDriver" aria-expanded="false" aria-controls="newDriver">
+        <button class="btn btn-primary" type="button" id="btn-add-driver">
             <span class="glyphicon glyphicon-user"></span><span
-                    class="glyphicon glyphicon-plus"></span><?php _e('   Add Driver', 'wfd_truck'); ?>
+                    class="glyphicon glyphicon-plus"></span> <?php _e('Add Driver', 'wfd_truck'); ?>
         </button>
 
-        <div class="collapse" id="newDriver">
-
-            <?php
-            $tbl_qualification = $wpdb->prefix . "wfd_truck_driver_qualification";
-            $tbl_licences = $wpdb->prefix . "wfd_truck_driver_licences";
-            $tbl_ranking = $wpdb->prefix . "wfd_truck_driver_ranking";
-            $res_ranking = $wpdb->get_results("select * from $tbl_ranking order by id");
-            $res_licenses = $wpdb->get_results("select * from $tbl_licences order by id");
-            $res_qualification = $wpdb->get_results("select * from $tbl_qualification order by id");
-
-
-            ?>
-            <div class="well">
-                <form method="POST">
-                    <div class="col-sm-6">
-                        <div class="form-group">
-                            <label><?php _e('First Name', 'wfd_truck'); ?></label>
-                            <input type="text" name="fname" class="form-control"
-                                   placeholder="Frist Name">
+        <!-- Modal Driver-->
+        <div class="modal fade" id="modal-driver" data-mode="new" tabindex="-1" role="dialog"
+             aria-labelledby="myModalLabel">
+            <div style="width: 50%" class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"
+                                aria-label="Close"><span
+                                    aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="myModalLabel"><?php _e('Driver:', 'wfd_truck'); ?></h4>
+                    </div>
+                    <div class="modal-body well">
+                        <div class="row">
+                            <div class="col-sm-5">
+                                <h2><?php _e('Core Data', 'wfd_truck'); ?></h2>
+                                <form class="form-horizontal" id="driver-core-data">
+                                    <div class="form-group">
+                                        <label class="control-label col-sm-5"><?php _e('First Name', 'wfd_truck'); ?>:</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" class="form-control" name="fname">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label col-sm-5"><?php _e('Last Name', 'wfd_truck'); ?>
+                                            :</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" class="form-control" name="lname">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label col-sm-5"><?php _e('Street', 'wfd_truck'); ?>:</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" class="form-control" name="street">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label col-sm-5"><?php _e('City', 'wfd_truck'); ?>:</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" class="form-control" name="city">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label col-sm-5"><?php _e('Phone', 'wfd_truck'); ?>:</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" class="form-control" name="phone">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label col-sm-5"><?php _e('Note', 'wfd_truck'); ?>:</label>
+                                        <div class="col-sm-7">
+                                            <input type="text"
+                                                   class="form-control"
+                                                   name="note">
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="col-sm-5">
+                                <h2><?php _e('Applications', 'wfd_truck'); ?></h2>
+                                <form class="form-horizontal" id="driver-application-form">
+                                    <div class="form-group">
+                                        <label class="col-sm-5"><?php _e('breakdown service', 'wfd_truck'); ?></label>
+                                        <div class="col-sm-7"><input
+                                                    value="2" name="breakdown"
+                                                    type="text"
+                                                    class="rating col-sm-6"
+                                                    data-min=0 data-max=5
+                                                    data-step=0.5 data-size="xs"
+                                                    data-show-caption=false
+                                                    title=""></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-5"><?php _e('drag cars', 'wfd_truck'); ?></label>
+                                        <div class="col-sm-7">
+                                            <input value="2"
+                                                   type="text" name="drag-cars"
+                                                   class="rating col-sm-6"
+                                                   data-min=0 data-max=5
+                                                   data-step=0.5 data-size="xs"
+                                                   data-show-caption=false
+                                                   title="">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-5"><?php _e('drag < 7.5to', 'wfd_truck'); ?></label>
+                                        <div class="col-sm-7"><input
+                                                    name="drag-less-7" value="2"
+                                                    type="text"
+                                                    class="rating col-sm-6"
+                                                    data-min=0 data-max=5
+                                                    data-step=0.5 data-size="xs"
+                                                    data-show-caption=false
+                                                    title=""></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-5"><?php _e('drag > 7.5to', 'wfd_truck'); ?></label>
+                                        <div class="col-sm-7"><input
+                                                    name="drag-more-7" value="2"
+                                                    type="text"
+                                                    class="rating col-sm-6"
+                                                    data-min=0 data-max=5
+                                                    data-step=0.5 data-size="xs"
+                                                    data-show-caption=false
+                                                    title=""></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-5"><?php _e('crane', 'wfd_truck'); ?></label>
+                                        <div class="col-sm-7"><input
+                                                    name="crane" value="2"
+                                                    type="text"
+                                                    class="rating col-sm-6"
+                                                    data-min=0 data-max=5
+                                                    data-step=0.5 data-size="xs"
+                                                    data-show-caption=false
+                                                    title=""></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-5"><?php _e('truck service', 'wfd_truck'); ?></label>
+                                        <div class="col-sm-7"><input
+                                                    name="truck-service" value="2"
+                                                    type="text"
+                                                    class="rating col-sm-6"
+                                                    data-min=0 data-max=5
+                                                    data-step=0.5 data-size="xs"
+                                                    data-show-caption=false
+                                                    title=""></div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="col-sm-2">
+                                <img class="img-thumbnail" alt="Cinque Terre" width="200" height="150">
+                                <p class="col-sm-12"><?php _e('driver photo', 'wfd_truck'); ?></p>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label><?php _e('Last Name', 'wfd_truck'); ?></label>
-                            <input type="text" name="lname" class="form-control"
-                                   placeholder="Last Name">
-                        </div>
-                        <div class="form-group">
-                            <label><?php _e('Address', 'wfd_truck'); ?></label>
-                            <input type="text" name="street" class="form-control"
-                                   placeholder="Street Address">
-                        </div>
-                        <div class="form-group">
-                            <label><?php _e('City', 'wfd_truck'); ?></label>
-                            <input type="text" name="city" class="form-control"
-                                   placeholder="City">
-                        </div>
-                        <div class="form-group">
-                            <label><?php _e('Phone', 'wfd_truck'); ?></label>
-                            <input type="text" name="phone" class="form-control"
-                                   placeholder="Phone Number">
-                        </div>
-                        <div class="form-group">
-                            <label><?php _e('Note', 'wfd_truck'); ?></label>
-                            <textarea name="note" class="form-control"
-                                      placeholder="Note"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <input type="hidden" name="type" value="Driver">
-                            <input type="hidden" name="cid" value="<?php echo $id ?>">
-                            <input type="submit" name="drive_save" class="form-controll"
-                                   value="Save">
+                        <div class="row">
+                            <div class="col-sm-5">
+                                <h2><?php _e('Driving Licenses', 'wfd_truck'); ?></h2>
+                                <form id="driver-license-form">
+                                    <div class="col-sm-4">
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" value="" name="c1" checked>
+                                                <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
+                                                <?php _e('C1', 'wfd_truck'); ?>
+                                            </label>
+                                        </div>
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" value="" checked name="c1e">
+                                                <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
+                                                <?php _e('C1E', 'wfd_truck'); ?>
+                                            </label>
+                                        </div>
+                                        <div class="checkbox disabled">
+                                            <label>
+                                                <input type="checkbox" value="" checked name="crane-lic">
+                                                <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
+                                                <?php _e('crane', 'wfd_truck'); ?>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" value="" checked name="kennz95">
+                                                <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
+                                                <?php _e('Kennz 95', 'wfd_truck'); ?>
+                                            </label>
+                                        </div>
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" value="" checked name="club-mobil">
+                                                <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
+                                                <?php _e('Clubmobil', 'wfd_truck'); ?>
+                                            </label>
+                                        </div>
+                                        <div class="checkbox disabled">
+                                            <label>
+                                                <input type="checkbox" value="" checked name="car-opening">
+                                                <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
+                                                <?php _e('car opening', 'wfd_truck'); ?>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="col-sm-7">
+                                <h2><?php _e('Qualification', 'wfd_truck'); ?></h2>
+                                <form id="driver-qualification-form">
+                                    <div class="col-sm-6">
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" value="" checked name="motor-mechatronics">
+                                                <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
+                                                <?php _e('motor mechatronics', 'wfd_truck'); ?>
+                                            </label>
+                                        </div>
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" value="" checked name="motor-foreman">
+                                                <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
+                                                <?php _e('motor foreman', 'wfd_truck'); ?>
+                                            </label>
+                                        </div>
+                                        <div class="checkbox disabled">
+                                            <label>
+                                                <input type="checkbox" value="" checked name="learned">
+                                                <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
+                                                <?php _e('learned', 'wfd_truck'); ?>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="checkbox disabled">
+                                            <label>
+                                                <input type="checkbox" value="" checked name="unlearned">
+                                                <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
+                                                <?php _e('unlearned', 'wfd_truck'); ?>
+                                            </label>
+                                        </div>
+                                        <div class="checkbox disabled">
+                                            <label>
+                                                <input type="checkbox" value="" checked name="commercial">
+                                                <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
+                                                <?php _e('commercial vehicle technology', 'wfd_truck'); ?>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-sm-6">
-                        <div class="col-sm-8">
-                            <h3><?php _e('Rating', 'wfd_truck'); ?></h3>
-                            <?php foreach ($res_ranking as $rk) { ?>
-                                <label><?php echo $rk->rank_item ?></label>
-                                <select name="<?php echo 'ranking_' . $rk->id ?>"
-                                        class="form-control">
-                                    <option>5</option>
-                                    <option>4</option>
-                                    <option>3</option>
-                                    <option>2</option>
-                                    <option>1</option>
-                                </select>
-                                <br/>
-
-                            <?php } ?>
-                        </div>
-                        <div class="col-sm-4">
-                            <?php _e('Driver Picture', 'wfd_truck'); ?>
-                        </div>
-                        <div class="clearfix"></div>
-                        <div class="col-sm-6">
-                            <h3><?php _e('License', 'wfd_truck'); ?></h3>
-                            <?php foreach ($res_licenses as $ri) { ?>
-                                <input type="checkbox" name="licences[]"
-                                       value="<?php echo $ri->licences ?>"> <?php echo $ri->licences ?>
-                                <br>
-                            <?php } ?>
-                        </div>
-                        <div class="col-sm-6">
-                            <h3><?php _e('Qualification', 'wfd_truck'); ?></h3>
-                            <?php foreach ($res_qualification as $rq) { ?>
-                                <input type="checkbox" name="qualification[]"
-                                       value="<?php echo $rq->qualification ?>"> <?php echo $rq->qualification ?>
-                                <br>
-                            <?php } ?>
-                        </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="driver-save">
+                            <span class="glyphicon glyphicon-floppy-disk"></span> <?php _e('Save', 'wfd_truck'); ?>
+                        </button>
                     </div>
-
-                </form>
-
-                <div class="clearfix"></div>
+                </div>
             </div>
         </div>
-
 
     </div>
 
@@ -3112,25 +2478,27 @@ function wfd_pickup_driver_view()
                     <td><?php echo $rdt->phone ?></td>
                     <td><?php echo $rdt->note ?></td>
                     <td>
-                        <button type="button" class="btn btn-link" data-toggle="modal"
-                                data-target="#mdtview_<?php echo $rdt->id ?>"><?php _e('', 'wfd_truck'); ?>
-                            <?php _e('View', 'wfd_truck'); ?>
-                        </button>
-                        ||
-                        <button type="button" class="btn btn-link" data-toggle="modal"
-                                data-target="#mdtedit_<?php echo $rdt->id ?>"><?php _e('', 'wfd_truck'); ?>
-                            <?php _e('Edit', 'wfd_truck'); ?>
-                        </button>
-                        ||
-                        <button type="button" class="btn btn-link" data-toggle="modal"
-                                data-target="#mdtnew_<?php echo $rdt->id ?>"><?php _e('', 'wfd_truck'); ?>
-                            <?php _e('New', 'wfd_truck'); ?>
-                        </button>
-                        ||
-                        <button type="button" class="btn btn-link" data-toggle="modal"
-                                data-target="#mdtcopy_<?php echo $rdt->id ?>"><?php _e('', 'wfd_truck'); ?>
-                            <?php _e('Copy', 'wfd_truck'); ?>
-                        </button>
+                        <div class="btn-group-driver">
+                            <button type="button" class="btn btn-link" data-toggle="modal"
+                                    data-target="#mdtview_<?php echo $rdt->id ?>"><?php _e('', 'wfd_truck'); ?>
+                                <?php _e('View', 'wfd_truck'); ?>
+                            </button>
+                            ||
+                            <button type="button" class="btn btn-link" data-toggle="modal"
+                                    data-target="#mdtedit_<?php echo $rdt->id ?>"><?php _e('', 'wfd_truck'); ?>
+                                <?php _e('Edit', 'wfd_truck'); ?>
+                            </button>
+                            ||
+                            <button type="button" class="btn btn-link" data-toggle="modal"
+                                    data-target="#mdtnew_<?php echo $rdt->id ?>"><?php _e('', 'wfd_truck'); ?>
+                                <?php _e('New', 'wfd_truck'); ?>
+                            </button>
+                            ||
+                            <button type="button" class="btn btn-link" data-toggle="modal"
+                                    data-target="#mdtcopy_<?php echo $rdt->id ?>"><?php _e('', 'wfd_truck'); ?>
+                                <?php _e('Copy', 'wfd_truck'); ?>
+                            </button>
+                        </div>
                         <!-- Modal TView-->
                         <div class="modal fade" id="mdtview_<?php echo $rdt->id ?>"
                              tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -4557,7 +3925,7 @@ function wfd_truck_user_dashboard_fn()
                     <div class="col-sm-9">
                         <ul class="pull-right nav  navbar-nav">
                             <li>
-                                <a href=""><?php _e('Welcome', 'wfd_truck'); ?> <?php echo $_SESSION['client_username'] ?></a>
+                                <a href=""><?php _e('Welcome', 'wfd_truck'); ?><?php echo $_SESSION['client_username'] ?></a>
                             </li>
                             <li><a href="?act=logout"><?php _e('Logout', 'wfd_truck'); ?></a></li>
                         </ul>
