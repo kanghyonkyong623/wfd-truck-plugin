@@ -235,3 +235,10 @@ input[type=time]::-webkit-outer-spin-button {
 #file-upload{
     display: none;
 }
+
+.modal-body.well{
+    margin-bottom: 0px;
+}
+.modal-footer{
+    margin-top:0px;
+}
