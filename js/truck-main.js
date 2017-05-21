@@ -206,6 +206,694 @@ $(document).ready(function ($) {
         $('#navigate_client_view').prop('disabled', false);
     });
 
+    $('.btn-add-truck').click(function (e) {
+
+        $(function () {
+            var $checkbox = $('#new_motorcycle');
+            $checkbox.prop('checked', false);
+        });
+        $('#new_truck_id').val('');
+        $('#new_brand').val('');
+        $('#new_weight').val('');
+        $('#new_max_load').val('');
+        $('#new_load_height').val('');
+        $('#new_truck_type').val('');
+        $('#new_status').val('');
+        $('#new_pheight').val('');
+        $('#new_spec_force').val('');
+        $('#new_cable_force').val('');
+        $('#new_crane').val('');
+        $('#new_plength').val('');
+        $('#new_motorcycle').val('');
+        $('#new_seats').val('');
+        $('#new_under_lift').val('');
+        $('#new_out_order').val('');
+        $('#truckModalLabel').text('Add New Truck');
+        $('#modal_add_truck').data('editMode', false);
+        $('#btn_save_truck').prop('disabled', false);
+        $('#modal_add_truck').modal('show');
+    });
+
+    $('.btn-truck-view').click(function (e) {
+        var selId = $(this).data('truckId');
+        settruckIdToNavDlg(this, selId);
+
+        $('#modal_add_truck').data('editMode', true);
+        $('#modal_add_truck').data('selMode', selId);
+        $('#btn_save_truck').prop('disabled', true);
+        $('#modal_add_truck').modal('show');
+    });
+
+    $('.btn-truck-edit').click(function (e) {
+        var selId = $(this).data('truckId');
+        settruckIdToNavDlg(this, selId);
+
+        $('#modal_add_truck').data('editMode', true);
+        $('#modal_add_truck').data('selMode', selId);
+        $('#btn_save_truck').prop('disabled', false);
+        $('#modal_add_truck').modal('show');
+    });
+
+    $('#btn_save_truck').click(function (e) {
+
+        var new_motorcycle;
+        var $checkbox = $('#new_motorcycle');
+            if ($checkbox.is(":checked")){
+                new_motorcycle='true';
+            }else {
+                new_motorcycle = 'false';
+            }
+        var new_truck_id = $('#new_truck_id').val();
+        var new_brand = $('#new_brand').val();
+        var new_weight = $('#new_weight').val();
+        var new_max_load = $('#new_max_load').val();
+        var new_load_height = $('#new_load_height').val();
+        var new_truck_type = $('#new_truck_type').val();
+        var new_status = $('#new_status').val();
+        var new_pheight = $('#new_pheight').val();
+        var new_spec_force = $('#new_spec_force').val();
+        var new_cable_force = $('#new_cable_force').val();
+        var new_crane = $('#new_crane').val();
+        var new_plength = $('#new_plength').val();
+        var new_seats = $('#new_seats').val();
+        var new_under_lift = $('#new_under_lift').val();
+        var new_out_order = $('#new_out_order').val();
+
+        if ($.trim(new_truck_id).length == 0 || $.trim(new_brand).length == 0 || $.trim(new_truck_type).length == 0 || $.trim(new_status).length == 0 ||
+            $.trim(new_weight).length == 0 || $.trim(new_max_load).length == 0 || $.trim(new_load_height).length == 0 || $.trim(new_pheight).length == 0 ||
+            $.trim(new_spec_force).length == 0 || $.trim(new_cable_force).length == 0 || $.trim(new_crane).length == 0 || $.trim(new_plength).length == 0 ||
+            $.trim(new_seats).length == 0 || $.trim(new_under_lift).length == 0)
+        {
+            var prom = ezBSAlert({
+                messageText: ajax_object.fillFormMessage,
+                alertType: "danger",
+                headerText: ajax_object.alertTitle,
+                okButtonText: ajax_object.okText
+            }).done(function (e) {
+                // $("body").append('<div>Callback from alert</div>');
+            });
+        }
+        else {
+            if ($('#modal_add_truck').data('editMode') == true) {
+                var clientId = $('#modal_add_truck').data('clientId');
+                var selId= $('#modal_add_truck').data('selMode');
+                var data = {
+                    action: 'wfd_update_truck',
+                    clientId: clientId,
+                    selId: selId,
+                    new_truck_id: new_truck_id,
+                    new_brand: new_brand,
+                    new_weight: new_weight,
+                    new_max_load: new_max_load,
+                    new_load_height: new_load_height,
+                    new_truck_type: new_truck_type,
+                    new_status: new_status,
+                    new_pheight: new_pheight,
+                    new_spec_force: new_spec_force,
+                    new_cable_force: new_cable_force,
+                    new_crane: new_crane,
+                    new_plength: new_plength,
+                    new_motorcycle: new_motorcycle,
+                    new_seats: new_seats,
+                    new_under_lift: new_under_lift,
+                    new_out_order: new_out_order,
+                };
+                $.post(
+                    ajax_object.ajax_url,
+                    data,
+                    function (response) {
+                        if (response.result == true) {
+                            ezBSAlert({
+                                messageText: response.message,
+                                alertType: "success",
+                                headerText: ajax_object.successTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                $('#modal_add_truck').modal('hide');
+                                var updateTarget = $('tr[data-truck-id="' + selId + '"]');
+                                var td = $('td', updateTarget);
+                                td[0].textContent = new_truck_id;
+                                td[1].textContent = new_brand;
+                                td[2].textContent = new_weight;
+                                td[3].textContent = new_max_load;
+                                td[4].textContent = new_load_height;
+                                td[5].textContent = new_truck_type;
+                                td[6].textContent = new_status;
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        }
+                        else {
+                            ezBSAlert({
+                                messageText: response.errorMessage,
+                                alertType: "danger",
+                                headerText: ajax_object.alertTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        }
+                    },
+                    'json'
+                )
+                    .fail(function (response) {
+                        alert('Error: ' + response.responseText);
+                    });
+
+            }
+            else {
+                var clientId = $('#modal_add_truck').data('clientId');
+                var data = {
+                    action: 'wfd_add_truck',
+                    clientId: clientId,
+                    new_truck_id: new_truck_id,
+                    new_brand: new_brand,
+                    new_weight: new_weight,
+                    new_max_load: new_max_load,
+                    new_load_height: new_load_height,
+                    new_truck_type: new_truck_type,
+                    new_status: new_status,
+                    new_pheight: new_pheight,
+                    new_spec_force: new_spec_force,
+                    new_cable_force: new_cable_force,
+                    new_crane: new_crane,
+                    new_plength: new_plength,
+                    new_motorcycle: new_motorcycle,
+                    new_seats: new_seats,
+                    new_under_lift: new_under_lift,
+                    new_out_order: new_out_order,
+                };
+                $.post(ajax_object.ajax_url,
+                    data,
+                    function (response) {
+                        if (response.result != true) {
+                            ezBSAlert({
+                                messageText: response.errorMessage,
+                                alertType: "danger",
+                                headerText: ajax_object.alertTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        } else {
+                            ezBSAlert({
+                                messageText: response.message,
+                                alertType: "success",
+                                headerText: ajax_object.successTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                $('#modal_add_truck').modal('hide');
+                                var truckTable = $('#truck-list');
+                                var newRow = $('<tr data-truck-id="' + response.clientId + '">');
+                                var cols = "";
+
+                                cols += '<td>' + new_truck_id + '</td><td>' + new_brand + '</td><td>' + new_weight + '</td><td>' + new_max_load + '</td><td>' + new_load_height + '</td><td>' + new_truck_type + '</td><td>' + new_status + '</td><td><button type="button" class="btn btn-primary btn-truck-view btn-sm"><span class="glyphicon glyphicon-th-list"></button> <button type="button" class="btn btn-primary btn-truck-edit btn-sm"><span class="glyphicon glyphicon-pencil"></button> <button type="button" class="btn btn-primary btn-truck-delete btn-sm"><span class="glyphicon glyphicon-remove"></button> <button type="button" class="btn btn-primary btn-truck-copy btn-sm"><span class="glyphicon glyphicon-save"></button></td>';
+
+                                newRow.append(cols);
+                                truckTable.append(newRow);
+
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        }
+                    },
+                    'json').fail(function (response) {
+                    ezBSAlert({
+                        messageText: response.errorMessage,
+                        alertType: "danger",
+                        headerText: ajax_object.alertTitle,
+                        okButtonText: ajax_object.okText
+                    }).done(function (e) {
+                        // $("body").append('<div>Callback from alert</div>');
+                    });
+                });
+            }
+        }
+    });
+
+    $('.btn-truck-delete').click(function (e) {
+        var selId = $(this).data('truckId');
+        ezBSAlert({
+            type: "confirm",
+            messageText: ajax_object.deleteConformMessage,
+            alertType: "info"
+        }).done(function (e) {
+            if (e == true) {
+                $.post(
+                    ajax_object.ajax_url,
+                    {
+                        action: 'wfd_delete_truck',
+                        selId: selId,
+                    },
+                    function (response) {
+                        if (response.result == true) {
+                            ezBSAlert({
+                                messageText: response.message,
+                                alertType: "success",
+                                headerText: ajax_object.successTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                $('tr[data-truck-id="' + selId + '"]').remove();
+                            });
+                        }
+                        else {
+                            ezBSAlert({
+                                messageText: response.errorMessage,
+                                alertType: "danger",
+                                headerText: ajax_object.alertTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        }
+                    },
+                    'json'
+                )
+                    .fail(function (response) {
+                        alert('Error: ' + response.responseText);
+                    });
+            }
+        });
+    });
+
+    $('#btn_save_callnum').click(function (e) {
+
+        var new_name = $('#new_name').val();
+        var new_phoneno = $('#new_phoneno').val();
+        var new_callnote = $('#new_callnote').val();
+        var new_category = $('#new_category').val();
+        if ($.trim(new_name).length == 0 || $.trim(new_phoneno).length == 0 || $.trim(new_category).length == 0) {
+            var prom = ezBSAlert({
+                messageText: ajax_object.fillFormMessage,
+                alertType: "danger",
+                headerText: ajax_object.alertTitle,
+                okButtonText: ajax_object.okText
+            }).done(function (e) {
+                // $("body").append('<div>Callback from alert</div>');
+            });
+        }
+        else {
+            if ($('#modal_add_callnum').data('editMode') == true) {
+                var clientId = $('#modal_add_callnum').data('clientId');
+                var selId= $('#modal_add_callnum').data('selMode');
+                var data = {
+                    action: 'wfd_update_callnum',
+                    clientId: clientId,
+                    selId: selId,
+                    new_name: new_name,
+                    new_phoneno: new_phoneno,
+                    new_callnote: new_callnote,
+                    new_category: new_category,
+                };
+                $.post(
+                    ajax_object.ajax_url,
+                    data,
+                    function (response) {
+                        if (response.result == true) {
+                            ezBSAlert({
+                                messageText: response.message,
+                                alertType: "success",
+                                headerText: ajax_object.successTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                $('#modal_add_callnum').modal('hide');
+                                var updateTarget = $('tr[data-callnum-id="' + selId + '"]');
+                                var td = $('td', updateTarget);
+                                td[0].textContent = new_name;
+                                td[1].textContent = new_phoneno;
+                                td[2].textContent = new_callnote;
+                                td[3].textContent = new_category;
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        }
+                        else {
+                            ezBSAlert({
+                                messageText: response.errorMessage,
+                                alertType: "danger",
+                                headerText: ajax_object.alertTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        }
+                    },
+                    'json'
+                )
+                    .fail(function (response) {
+                        alert('Error: ' + response.responseText);
+                    });
+
+            }
+            else {
+                var clientId = $('#modal_add_callnum').data('clientId');
+                var data = {
+                    action: 'wfd_add_callnum',
+                    clientId: clientId,
+                    new_name: new_name,
+                    new_phoneno: new_phoneno,
+                    new_callnote: new_callnote,
+                    new_category: new_category,
+                };
+                $.post(ajax_object.ajax_url,
+                    data,
+                    function (response) {
+                        if (response.result != true) {
+                            ezBSAlert({
+                                messageText: response.errorMessage,
+                                alertType: "danger",
+                                headerText: ajax_object.alertTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        } else {
+                            ezBSAlert({
+                                messageText: response.message,
+                                alertType: "success",
+                                headerText: ajax_object.successTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                $('#modal_add_callnum').modal('hide');
+                                var callnumTable = $('#callnum-list');
+                                var newRow = $('<tr data-callnum-id="' + response.clientId + '">');
+                                var cols = "";
+
+                                cols += '<td>' + new_name + '</td><td>' + new_phoneno + '</td><td>' + new_callnote + '</td><td>' + new_category + '</td><td><button type="button" class="btn btn-primary btn-callnum-edit btn-sm"><span class="glyphicon glyphicon-pencil"></button> <button type="button" class="btn btn-primary btn-callnum-del btn-sm"><span class="glyphicon glyphicon-remove"></button></td>';
+
+                                newRow.append(cols);
+                                callnumTable.append(newRow);
+
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        }
+                    },
+                    'json').fail(function (response) {
+                    ezBSAlert({
+                        messageText: response.errorMessage,
+                        alertType: "danger",
+                        headerText: ajax_object.alertTitle,
+                        okButtonText: ajax_object.okText
+                    }).done(function (e) {
+                        // $("body").append('<div>Callback from alert</div>');
+                    });
+                });
+            }
+        }
+    });
+
+    $('.btn-add-callnum').click(function (e) {
+        $('#new_name').val('');
+        $('#new_phoneno').val('');
+        $('#new_callnote').val('');
+        $('#new_category').val('');
+        $('#callnumModalLabel').text('Add New Call Number');
+        $('#modal_add_callnum').data('editMode', false);
+        $('#modal_add_callnum').modal('show');
+    });
+
+    $('.btn-callnum-edit').click(function (e) {
+        var selId = $(this).data('callnumId');
+        setcallnumIdToNavDlg(this, true);
+        $('#modal_add_callnum').data('editMode', true);
+        $('#callnumModalLabel').text('Call Number Edit');
+        $('#modal_add_callnum').data('selMode', selId);
+        $('#modal_add_callnum').modal('show');
+    });
+
+    $('.btn-callnum-delete').click(function (e) {
+        var selId = $(this).data('callnumId');
+        ezBSAlert({
+            type: "confirm",
+            messageText: ajax_object.deleteConformMessage,
+            alertType: "info"
+        }).done(function (e) {
+            if (e == true) {
+                $.post(
+                    ajax_object.ajax_url,
+                    {
+                        action: 'wfd_delete_callnum',
+                        selId: selId,
+                    },
+                    function (response) {
+                        if (response.result == true) {
+                            ezBSAlert({
+                                messageText: response.message,
+                                alertType: "success",
+                                headerText: ajax_object.successTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                $('tr[data-callnum-id="' + selId + '"]').remove();
+                            });
+                        }
+                        else {
+                            ezBSAlert({
+                                messageText: response.errorMessage,
+                                alertType: "danger",
+                                headerText: ajax_object.alertTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        }
+                    },
+                    'json'
+                )
+                    .fail(function (response) {
+                        alert('Error: ' + response.responseText);
+                    });
+            }
+        });
+    });
+
+    $('#btn_save_service').click(function (e) {
+
+        var new_service = $('#new_service').val();
+        var new_description = $('#new_description').val();
+        var new_price = $('#new_price').val();
+        if ($.trim(new_service).length == 0 || $.trim(new_description).length == 0 || $.trim(new_price).length == 0) {
+            var prom = ezBSAlert({
+                messageText: ajax_object.fillFormMessage,
+                alertType: "danger",
+                headerText: ajax_object.alertTitle,
+                okButtonText: ajax_object.okText
+            }).done(function (e) {
+                // $("body").append('<div>Callback from alert</div>');
+            });
+        }
+        else {
+            if ($('#modal_add_service').data('editMode') == true) {
+                    var clientId = $('#modal_add_service').data('clientId');
+                    var selId= $('#modal_add_service').data('selMode');
+                    var data = {
+                        action: 'wfd_update_service',
+                        clientId: clientId,
+                        selId: selId,
+                        new_service: new_service,
+                        new_description: new_description,
+                        new_price: new_price,
+                    };
+                    $.post(
+                        ajax_object.ajax_url,
+                        data,
+                        function (response) {
+                            if (response.result == true) {
+                                ezBSAlert({
+                                    messageText: response.message,
+                                    alertType: "success",
+                                    headerText: ajax_object.successTitle,
+                                    okButtonText: ajax_object.okText
+                                }).done(function (e) {
+                                    $('#modal_add_service').modal('hide');
+                                    var updateTarget = $('tr[data-service-id="' + selId + '"]');
+                                    var td = $('td', updateTarget);
+                                    td[0].textContent = new_service;
+                                    td[1].textContent = new_description;
+                                    td[2].textContent = new_price;
+                                    // $("body").append('<div>Callback from alert</div>');
+                                });
+                            }
+                            else {
+                                ezBSAlert({
+                                    messageText: response.errorMessage,
+                                    alertType: "danger",
+                                    headerText: ajax_object.alertTitle,
+                                    okButtonText: ajax_object.okText
+                                }).done(function (e) {
+                                    // $("body").append('<div>Callback from alert</div>');
+                                });
+                            }
+                        },
+                        'json'
+                    )
+                        .fail(function (response) {
+                            alert('Error: ' + response.responseText);
+                        });
+
+            }
+            else {
+                var clientId = $('#modal_add_service').data('clientId');
+                var data = {
+                    action: 'wfd_add_service',
+                    clientId: clientId,
+                    new_service: new_service,
+                    new_description: new_description,
+                    new_price: new_price,
+                };
+                $.post(ajax_object.ajax_url,
+                    data,
+                    function (response) {
+                        if (response.result != true) {
+                            ezBSAlert({
+                                messageText: response.errorMessage,
+                                alertType: "danger",
+                                headerText: ajax_object.alertTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        } else {
+                            ezBSAlert({
+                                messageText: response.message,
+                                alertType: "success",
+                                headerText: ajax_object.successTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                $('#modal_add_service').modal('hide');
+                                var serviceTable = $('#service-list');
+                                var newRow = $('<tr  data-service-id="' + response.clientId + '">');
+                                var cols = "";
+
+                                cols += '<td>' + new_service + '</td><td>' + new_description + '</td><td>' + new_price + '</td><td><button type="button" class="btn btn-primary btn-service-edit btn-sm"><span class="glyphicon glyphicon-pencil"></button> <button type="button" class="btn btn-primary btn-service-del btn-sm"><span class="glyphicon glyphicon-remove"></button></td>';
+
+                                newRow.append(cols);
+                                serviceTable.append(newRow);
+
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        }
+                    },
+                    'json').fail(function (response) {
+                    ezBSAlert({
+                        messageText: response.errorMessage,
+                        alertType: "danger",
+                        headerText: ajax_object.alertTitle,
+                        okButtonText: ajax_object.okText
+                    }).done(function (e) {
+                        // $("body").append('<div>Callback from alert</div>');
+                    });
+                });
+            }
+        }
+    });
+
+    $('.btn-add-service').click(function (e) {
+        $('#new_service').val('');
+        $('#new_description').val('');
+        $('#new_price').val('');
+        $('#serviceModalLabel').text('Add New Service');
+        $('#modal_add_service').data('editMode', false);
+        $('#modal_add_service').modal('show');
+    });
+
+    $('.btn-service-edit').click(function (e) {
+        var selId = $(this).data('serviceId');
+        setserviceIdToNavDlg(this, true);
+        $('#modal_add_service').data('editMode', true);
+        $('#serviceModalLabel').text('Service Edit');
+        $('#modal_add_service').data('selMode', selId);
+        $('#modal_add_service').modal('show');
+    });
+
+    $('.btn-service-delete').click(function (e) {
+        var selId = $(this).data('serviceId');
+        ezBSAlert({
+            type: "confirm",
+            messageText: ajax_object.deleteConformMessage,
+            alertType: "info"
+        }).done(function (e) {
+            if (e == true) {
+                $.post(
+                    ajax_object.ajax_url,
+                    {
+                        action: 'wfd_delete_service',
+                        selId: selId,
+                    },
+                    function (response) {
+                        if (response.result == true) {
+                            ezBSAlert({
+                                messageText: response.message,
+                                alertType: "success",
+                                headerText: ajax_object.successTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                $('tr[data-service-id="' + selId + '"]').remove();
+                            });
+                        }
+                        else {
+                            ezBSAlert({
+                                messageText: response.errorMessage,
+                                alertType: "danger",
+                                headerText: ajax_object.alertTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        }
+                    },
+                    'json'
+                )
+                    .fail(function (response) {
+                        alert('Error: ' + response.responseText);
+                    });
+            }
+        });
+    });
+
+    function settruckIdToNavDlg(buttonElem, selId) {
+        var selId = selId;
+        var updateTarget = $(buttonElem).closest('tr[data-truck-id="' + selId + '"]');
+        var td = $('td', updateTarget);
+        $('#new_truck_id').val(td[0].textContent);
+        $('#new_brand').val(td[1].textContent);
+        $('#new_weight').val(td[2].textContent);
+        $('#new_max_load').val(td[3].textContent);
+        $('#new_load_height').val(td[4].textContent);
+        $('#new_truck_type').val(td[5].textContent);
+        $('#new_status').val(td[6].textContent);
+        $('#new_pheight').val(updateTarget.data('truckPheight'));
+        $('#new_spec_force').val(updateTarget.data('truckSpecforce'));
+        $('#new_plength').val(updateTarget.data('truckPlength'));
+        $('#new_cable_force').val(updateTarget.data('truckCableforce'));
+        $('#new_crane').val(updateTarget.data('truckCrane'));
+        $('#new_seats').val(updateTarget.data('truckSeats'));
+        $('#new_under_lift').val(updateTarget.data('truckUnderlift'));
+        $('#truckModalLabel').text('Truck: ' + td[0].textContent + '-' + td[1].textContent);
+        var motorcheck = updateTarget.data('truckMotorcycle');
+        var $checkbox = $('#new_motorcycle');
+        if (motorcheck==true){
+            $checkbox.prop('checked', true);
+        }else {
+            $checkbox.prop('checked', false);
+        }
+    }
+
+    function setcallnumIdToNavDlg(buttonElem, editMode) {
+        var selId = $(buttonElem).data('callnumId');
+        var updateTarget = $(buttonElem).closest('tr[data-callnum-id="' + selId + '"]');
+        var td = $('td', updateTarget);
+        $('#new_name').val(td[0].textContent);
+        $('#new_phoneno').val(td[1].textContent);
+        $('#new_callnote').val(td[2].textContent);
+        $('#new_category').val(td[3].textContent);
+    }
+
+    function setserviceIdToNavDlg(buttonElem, editMode) {
+        var selId = $(buttonElem).data('serviceId');
+        var updateTarget = $(buttonElem).closest('tr[data-service-id="' + selId + '"]');
+        var td = $('td', updateTarget);
+        $('#new_service').val(td[0].textContent);
+        $('#new_description').val(td[1].textContent);
+        $('#new_price').val(td[2].textContent);
+    }
+
     attachClientActions();
 
     function attachClientActions(){
@@ -676,7 +1364,30 @@ function ezBSAlert(options) {
     return deferredObject.promise();
 }
 
+$(document).ready(function() {
 
+
+    var readURL = function(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                $('#profile-pic').attr('src', e.target.result);
+            }
+
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+
+    $("#file-upload").on('change', function(){
+        readURL(this);
+    });
+
+    $("#profile-pic").on('dblclick', function(){
+        $("#file-upload").click();
+    });
+});
 // $(document).ready(function(){
 //     $("#btnAlert").on("click", function(){
 //         var prom = ezBSAlert({
