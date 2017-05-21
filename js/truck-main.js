@@ -1317,7 +1317,7 @@ $(document).ready(function ($) {
                                     cols += '<td>' + coreData['fname'] + '</td>';
                                     cols += '<td>' + coreData['lname'] + '</td><td>' + coreData['street'] + '</td><td>' + coreData['city'] + '</td><td>' + coreData['phone'] + '</td><td>' + coreData['note'] + '</td>';
 
-                                    var actionsContent = $('.btn-group-driver').html();
+                                    var actionsContent = '<div class="btn-group-driver"><button type="button" class="btn btn-primary btn-sm btn-driver-view"><span class="glyphicon glyphicon-th-list"></span></button><button type="button" class="btn btn-primary btn-sm btn-driver-edit"><span class="glyphicon glyphicon-pencil"></span></button><button type="button" class="btn btn-primary btn-sm btn-driver-delete"><span class="glyphicon glyphicon-remove"></span></button><button type="button" class="btn btn-primary btn-sm btn-driver-copy"><span class="glyphicon glyphicon-asterisk"></span></button></div>';
                                     cols += '<td>' + actionsContent + '</td>';
 
                                     newRow.append(cols);
@@ -1497,6 +1497,268 @@ $(document).ready(function ($) {
         $('input[name="unlearned"]', targetDlg).prop('checked', driverDetails['unlearned_qual']== "1");
         $('input[name="commercial"]', targetDlg).prop('checked', driverDetails['commercial_qual']== "1");
     }
+    //endregion
+
+    //region Pickup Driver
+
+    $('#btn-add-pickup-driver').click(function (e) {
+        var driverDlg = $('#modal-pickup-driver');
+        enablePickupDriverEdit(false);
+        driverDlg.data('mode', 'new').modal('show');
+    });
+
+
+    attachPickupDriverActions();
+
+    function attachPickupDriverActions(){
+        $('.btn-pickup-driver-view').click(function (e) {
+            var trElem = $(this).closest('tr');
+            var driverId = trElem.data('pickupDriverId');
+
+            $.post(ajax_object.ajax_url,
+                {
+                    action: 'wfd_get_pickup_driver_detail',
+                    pickupDriverId: driverId
+                },
+                function (response) {
+                    setPickupDriverDetailsToDlg(response);
+                    $('#pickup-driver-save').html('<span class="glyphicon glyphicon-pencil"></span> Edit');
+
+                    enablePickupDriverEdit(true);
+                    $('#modal-pickup-driver')
+                        .data('mode', 'view')
+                        .data('pickupDriverId', driverId)
+                        .modal('show');
+                },
+                'json'
+            );
+        });
+
+        $('.btn-pickup-driver-edit').click(function (e) {
+            var trElem = $(this).closest('tr');
+            var driverId = trElem.data('pickupDriverId');
+
+            $.post(ajax_object.ajax_url,
+                {
+                    action: 'wfd_get_pickup_driver_detail',
+                    pickupDriverId: driverId
+                },
+                function (response) {
+                    setPickupDriverDetailsToDlg(response);
+                    enablePickupDriverEdit(false);
+                    $('#modal-pickup-driver')
+                        .data('mode', 'edit')
+                        .data('pickupDriverId', driverId)
+                        .modal('show');
+                },
+                'json'
+            );
+        });
+
+        $('.btn-pickup-driver-delete').click(function (e) {
+            var driverId = $(this).closest('tr').data('pickupDriverId');
+            ezBSAlert({
+                type: "confirm",
+                messageText: ajax_object.deleteConformMessage,
+                alertType: "info"
+            }).done(function (e) {
+                if (e == true) {
+                    $.post(
+                        ajax_object.ajax_url,
+                        {
+                            action: 'wfd_delete_pickup_driver',
+                            pickupDriverId: driverId
+                        },
+                        function (response) {
+                            if (response.result == true) {
+                                ezBSAlert({
+                                    messageText: response.message,
+                                    alertType: "success",
+                                    headerText: ajax_object.successTitle,
+                                    okButtonText: ajax_object.okText
+                                }).done(function (e) {
+                                    $('tr[data-pickup-driver-id="' + driverId + '"]').remove();
+                                });
+                            }
+                            else {
+                                ezBSAlert({
+                                    messageText: response.errorMessage,
+                                    alertType: "danger",
+                                    headerText: ajax_object.alertTitle,
+                                    okButtonText: ajax_object.okText
+                                }).done(function (e) {
+                                    // $("body").append('<div>Callback from alert</div>');
+                                });
+                            }
+                        },
+                        'json'
+                    )
+                        .fail(function (response) {
+                            alert('Error: ' + response.responseText);
+                        });
+                }
+            });
+        });
+    }
+
+    function enablePickupDriverEdit(desabled) {
+        if(desabled){
+            $('#pickup-driver-save').html('<span class="glyphicon glyphicon-pencil"></span> Edit');
+        }
+        else{
+            $('#pickup-driver-save').html('<span class="glyphicon glyphicon-floppy-disk"></span> Save');
+        }
+        $('input', $('#modal-pickup-driver')).prop('disabled', desabled);
+        $('input', $('#pickup-driver-application-form')).rating('create');
+        $('#modal-pickup-driver').data('mode', desabled? 'view':'edit');
+    }
+
+    function setPickupDriverDetailsToDlg(driverDetails){
+        var targetDlg = $('#modal-pickup-driver');
+        $('input[name="fname"]', targetDlg).val(driverDetails['fname']);
+        $('input[name="lname"]', targetDlg).val(driverDetails['lname']);
+        $('input[name="street"]', targetDlg).val(driverDetails['street']);
+        $('input[name="city"]', targetDlg).val(driverDetails['city']);
+        $('input[name="phone"]', targetDlg).val(driverDetails['phone']);
+        $('input[name="note"]', targetDlg).val(driverDetails['note']);
+        $('input[name="pickups_less_250"]', targetDlg).val(driverDetails['pickups_less_250']).rating('create');
+        $('input[name="pickups_less_500"]', targetDlg).val(driverDetails['pickups_less_500']).rating('create');
+        $('input[name="pickups_more_500"]', targetDlg).val(driverDetails['pickups_more_500']).rating('create');
+        $('input[name="cars"]', targetDlg).val(driverDetails['cars']).rating('create');
+        $('input[name="truck_less_3"]', targetDlg).val(driverDetails['truck_less_3']).rating('create');
+        $('input[name="truck_less_7"]', targetDlg).val(driverDetails['truck_less_7']).rating('create');
+
+        $('input[name="c1"]', targetDlg).prop('checked', driverDetails['c1_license'] == "1");
+        $('input[name="c1e"]', targetDlg).prop('checked', driverDetails['c1e_license'] == "1");
+        $('input[name="crane_lic"]', targetDlg).prop('checked', driverDetails['crane_lic']== "1");
+        $('input[name="kennz95"]', targetDlg).prop('checked', driverDetails['kennz95']== "1");
+        $('input[name="motor_mechatronics"]', targetDlg).prop('checked', driverDetails['motor_mechatronics']== "1");
+        $('input[name="motor_foreman"]', targetDlg).prop('checked', driverDetails['motor_foreman']== "1");
+        $('input[name="learned"]', targetDlg).prop('checked', driverDetails['learned']== "1");
+        $('input[name="unlearned"]', targetDlg).prop('checked', driverDetails['unlearned']== "1");
+        $('input[name="commercial"]', targetDlg).prop('checked', driverDetails['commercial']== "1");
+    }
+
+    $('#pickup-driver-save').click(function (e) {
+        var driverDlg = $('#modal-pickup-driver');
+        var mode = driverDlg.data('mode');
+        var driverId = driverDlg.data('pickupDriverId');
+
+        switch (mode){
+            case "view":
+                enableDriverEdit(false);
+                break;
+            case "edit":
+            case "new":
+                var coreDataForm = $('#pickup-driver-core-data');
+                var coreDataFields = $('input', coreDataForm);
+                var coreData = {};
+                $.each(coreDataFields, function (i, field) {
+                    field = $(field);
+                    coreData[field.prop('name')] = field.val();
+                });
+
+                var appFields = $('input', $('#pickup-driver-application-form'));
+                var appData = {};
+                $.each(appFields, function (i, field) {
+                    field = $(field);
+                    appData[field.prop('name')] = field.val();
+                });
+
+                var licenseFields = $('input', $('#pickup-driver-license-form'));
+                var licenseData = {};
+                $.each(licenseFields, function (i, field) {
+                    field = $(field);
+                    if(field.prop('checked') == true){
+                        licenseData[field.prop('name')] = 1;
+                    }
+                    else{
+                        licenseData[field.prop('name')] = 0;
+                    }
+                });
+
+                var qualificationFields = $('input', $('#pickup-driver-qualification-form'));
+                var qualificationData = {};
+                $.each(qualificationFields, function (i, field) {
+                    field = $(field);
+                    if(field.prop('checked') == true){
+                        qualificationData[field.prop('name')] = 1;
+                    }
+                    else {
+                        qualificationData[field.prop('name')] = 0;
+                    }
+                });
+
+                $.post(
+                    ajax_object.ajax_url,
+                    {
+                        action: 'wfd_pickup_driver_save',
+                        mode: mode,
+                        pickupDriverId: driverId,
+                        coreData: JSON.stringify(coreData),
+                        applicationData: JSON.stringify(appData),
+                        licenseData: JSON.stringify(licenseData),
+                        qualificationData: JSON.stringify(qualificationData)
+                    },
+                    function (response) {
+                        if (response.result == true) {
+                            ezBSAlert({
+                                messageText: response.message,
+                                alertType: "success",
+                                headerText: ajax_object.successTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                driverDlg.modal('hide');
+                                if(mode=='new'){
+                                    var driversTable = $('#pickup-drivers-table');
+                                    var newRow = $('<tr  data-pickup-driver-id="' + response.driverId + '">');
+                                    var cols = "";
+
+                                    cols += '<td>' + coreData['fname'] + '</td>';
+                                    cols += '<td>' + coreData['lname'] + '</td><td>' + coreData['street'] + '</td><td>' + coreData['city'] + '</td><td>' + coreData['phone'] + '</td><td>' + coreData['note'] + '</td>';
+
+                                    var actionsContent = '<div class="btn-group-pickup-driver"><button type="button" class="btn btn-primary btn-sm btn-pickup-driver-view"><span class="glyphicon glyphicon-th-list"></span></button><button type="button" class="btn btn-primary btn-sm btn-pickup-driver-edit"><span class="glyphicon glyphicon-pencil"></span></button><button type="button" class="btn btn-primary btn-sm btn-pickup-driver-delete"><span class="glyphicon glyphicon-remove"></span></button><button type="button" class="btn btn-primary btn-sm btn-pickup-driver-copy"><span class="glyphicon glyphicon-asterisk"></span></button></div>';
+                                    cols += '<td>' + actionsContent + '</td>';
+
+                                    newRow.append(cols);
+                                    $('button[data-client-id]', newRow).data('clientId', response.clientId);
+
+                                    driversTable.append(newRow);
+                                    attachPickupDriverActions();
+
+                                }else{
+                                    var updateTarget = $('tr[data-pickup-driver-id="' + driverId + '"]');
+                                    var td = $('td', updateTarget);
+                                    td[0].textContent = coreData['fname'];
+                                    td[1].textContent = coreData['lname'];
+                                    td[2].textContent = coreData['street'];
+                                    td[3].textContent = coreData['city'];
+                                    td[4].textContent = coreData['phone'];
+                                    td[5].textContent = coreData['note'];
+                                }
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        }
+                        else {
+                            ezBSAlert({
+                                messageText: response.errorMessage,
+                                alertType: "danger",
+                                headerText: ajax_object.alertTitle,
+                                okButtonText: ajax_object.okText
+                            }).done(function (e) {
+                                // $("body").append('<div>Callback from alert</div>');
+                            });
+                        }
+                    },
+                    'json'
+                )
+                    .fail(function (response) {
+                        alert('Error: ' + response.responseText);
+                    });
+                break;
+        }
+    });
+
     //endregion
 
     function filterByText(text, table, col) {
