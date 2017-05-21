@@ -230,6 +230,7 @@ $(document).ready(function ($) {
         $('#new_seats').val('');
         $('#new_under_lift').val('');
         $('#new_out_order').val('');
+        $('#profile-pic').attr("src","wp-admin/images/truck_profile_back.jpg");
         $('#truckModalLabel').text('Add New Truck');
         $('#modal_add_truck').data('editMode', false);
         $('#btn_save_truck').prop('disabled', false);
@@ -280,6 +281,7 @@ $(document).ready(function ($) {
         var new_seats = $('#new_seats').val();
         var new_under_lift = $('#new_under_lift').val();
         var new_out_order = $('#new_out_order').val();
+        var new_image=$('image');
 
         if ($.trim(new_truck_id).length == 0 || $.trim(new_brand).length == 0 || $.trim(new_truck_type).length == 0 || $.trim(new_status).length == 0 ||
             $.trim(new_weight).length == 0 || $.trim(new_max_load).length == 0 || $.trim(new_load_height).length == 0 || $.trim(new_pheight).length == 0 ||
@@ -383,6 +385,7 @@ $(document).ready(function ($) {
                     new_seats: new_seats,
                     new_under_lift: new_under_lift,
                     new_out_order: new_out_order,
+                    new_image: new_image,
                 };
                 $.post(ajax_object.ajax_url,
                     data,
@@ -1655,9 +1658,9 @@ $(document).ready(function() {
         }
     }
 
-
     $("#file-upload").on('change', function(){
         readURL(this);
+
     });
 
     $("#profile-pic").on('dblclick', function(){

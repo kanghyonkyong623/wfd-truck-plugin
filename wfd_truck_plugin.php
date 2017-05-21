@@ -475,11 +475,12 @@ function wfd_add_truck()
     $new_motorcycle= $_POST['new_motorcycle'];
     $new_seats = $_POST['new_seats'];
     $new_under_lift = $_POST['new_under_lift'];
+    $new_image=$_FILES['new_image']['name'];
     $new_out_order = $_POST['new_out_order'];
 
     $result_array = array();
     $tbl_truck = $wpdb->prefix . "wfd_truck_truck_truck_info";
-    $sql_add_truck = "INSERT INTO $tbl_truck (cid, brand, weight, max_load, load_height, type, status, plateau_height, plateau_lengh, spectacle_force, cable_winch_force, crane, motorcycle, seats, uder_lift, truck_ID) values ('$cid', '$new_brand', '$new_weight', '$new_max_load', '$new_load_height', '$new_truck_type', '$new_status', '$new_pheight', '$new_plength', '$new_spec_force', '$new_cable_force', '$new_crane', '$new_motorcycle', '$new_seats', '$new_under_lift', '$new_truck_id')";
+    $sql_add_truck = "INSERT INTO $tbl_truck (cid, brand, weight, max_load, load_height, type, status, plateau_height, plateau_lengh, spectacle_force, cable_winch_force, crane, motorcycle, seats, uder_lift, picture, truck_ID) values ('$cid', '$new_brand', '$new_weight', '$new_max_load', '$new_load_height', '$new_truck_type', '$new_status', '$new_pheight', '$new_plength', '$new_spec_force', '$new_cable_force', '$new_crane', '$new_motorcycle', '$new_seats', '$new_under_lift', '$new_image' ,'$new_truck_id')";
     if ($wpdb->query($sql_add_truck) != false) {
         $result_array['result'] = true;
         $result_array['message'] = __('Congratulate! Truck Data successfully created!', 'wdf_truck');
@@ -3750,9 +3751,9 @@ function wfd_truck_pool_view()
                                                 </form>
                                             </div>
                                             <div class="col-sm-2">
-                                                <img src="wp-admin/images/truck.jpg" id="profile-pic"
+                                                <img src="wp-admin/images/truck_profile_back.jpg" class="img-thumbnail" id="profile-pic"
                                                      alt="Cinque Terre" width="200" height="150">
-                                                <input id="file-upload" type="file" accept="image/*"/>
+                                                <input id="file-upload" type="file" name="image" accept="image/*"/>
                                                 <p class="col-sm-12"><?php _e('truck photo', 'wfd_truck'); ?></p>
 
                                                 <form>
