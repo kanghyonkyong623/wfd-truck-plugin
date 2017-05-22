@@ -1442,7 +1442,7 @@ function wfd_admin_view_as_wp_menu()
                     <td><div></div></td>
                 </tr>
             </table>
-            <table class="table table-striped" data-toggle="table" id="clients-list">
+            <table class="table table-striped" data-toggle="table" id="clients-list" data-unique-id="id">
                 <colgroup>
                     <col class="col-md-1">
                     <col class="col-md-1">
@@ -1454,6 +1454,9 @@ function wfd_admin_view_as_wp_menu()
                 </colgroup>
                 <thead>
                 <tr>
+                    <th data-field="id" data-visible="false"></th>
+                    <th data-field="username" data-visible="false"></th>
+                    <th data-field="email" data-visible="false"></th>
                     <th data-field="company"
                         data-sortable="true"><?php _e('Company', 'wfd_truck'); ?></th>
                     <th data-field="street"><?php _e('Street', 'wfd_truck'); ?></th>
@@ -1461,9 +1464,9 @@ function wfd_admin_view_as_wp_menu()
                         data-sortable="true"><?php _e('Zip', 'wfd_truck'); ?></th>
                     <th data-field="city"
                         data-sortable="true"><?php _e('City', 'wfd_truck'); ?></th>
-                    <th><?php _e('Phone', 'wfd_truck'); ?></th>
-                    <th><?php _e('Note', 'wfd_truck'); ?></th>
-                    <th><?php _e('Action', 'wfd_truck'); ?></th>
+                    <th data-field="phone"><?php _e('Phone', 'wfd_truck'); ?></th>
+                    <th data-field="note"><?php _e('Note', 'wfd_truck'); ?></th>
+                    <th data-field="action" data-formatter="clientsActionFormatter" data-events="clientsActionEvents"><?php _e('Action', 'wfd_truck'); ?></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -1472,25 +1475,16 @@ function wfd_admin_view_as_wp_menu()
                 foreach ($res_client_list as $client) { ?>
                     <tr data-user-id="<?php echo $client->id ?>" data-user-name="<?php echo $client->username ?>"
                         data-email-address="<?php echo $client->email ?>" data-word="<?php echo $client->password ?>">
+                        <td><?php echo $client->id ?></td>
+                        <td><?php echo $client->username ?></td>
+                        <td><?php echo $client->email ?></td>
                         <td><?php echo $client->company ?></td>
                         <td><?php echo $client->street ?></td>
                         <td><?php echo $client->zip ?></td>
                         <td><?php echo $client->city ?></td>
                         <td><?php echo $client->phone ?></td>
                         <td><?php echo $client->note ?></td>
-                        <td>
-                            <div class="btn-group-client">
-                                <button type="button" class="btn btn-primary btn-client-view btn-sm"
-                                        data-client-id="<?php echo $client->id ?>"><span
-                                            class="glyphicon glyphicon-th-list"></button>
-                                <button type="button" class="btn btn-primary btn-client-edit btn-sm"
-                                        data-client-id="<?php echo $client->id ?>"><span
-                                            class="glyphicon glyphicon-pencil"></button>
-                                <button type="button" class="btn btn-primary btn-client-delete btn-sm"
-                                        data-client-id="<?php echo $client->id ?>"><span
-                                            class="glyphicon glyphicon-remove"></button>
-                            </div>
-                        </td>
+                        <td></td>
                     </tr>
                 <?php } ?>
                 </tbody>
@@ -2315,7 +2309,7 @@ function wfd_driver_view()
     ?>
     <div role="tabpanel" class="tab-pane" id="driver">
         <h2><?php _e('Driver', 'wfd_truck'); ?></h2>
-        <table class="table table-striped dataTable" data-toggle="table" id="drivers-table">
+        <table class="table table-striped dataTable" data-toggle="table" id="drivers-table" data-unique-id="id">
             <colgroup>
                 <col class="col-md-2">
                 <col class="col-md-2">
