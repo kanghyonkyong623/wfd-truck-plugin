@@ -61,6 +61,7 @@ function my_enqueue()
     wp_enqueue_script('bootstrap-main-js', 'http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js');
     wp_enqueue_script('bootstrap-select-js', 'https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.6.4/js/bootstrap-select.min.js', null);
     wp_enqueue_script('bootstrap-table-js', 'https://rawgit.com/wenzhixin/bootstrap-table/master/src/bootstrap-table.js', null);
+    wp_enqueue_script('bootstrap-table-filter-js', '//cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.9.1/extensions/filter-control/bootstrap-table-filter-control.js', null);
 
     wp_register_style('truck-main-style', plugins_url('css/truck-main.css', __FILE__));
     wp_register_style('star-rating-css', plugins_url('css/star-rating.min.css', __FILE__));
@@ -121,6 +122,25 @@ add_action('wp_ajax_wfd_pickup_driver_save', 'wfd_pickup_driver_save');
 add_action('wp_ajax_nopriv_wfd_pickup_driver_save', 'wfd_pickup_driver_save');
 add_action('wp_ajax_wfd_get_truck_detail', 'wfd_get_truck_detail');
 add_action('wp_ajax_nopriv_wfd_get_truck_detail', 'wfd_get_truck_detail');
+add_action('wp_ajax_wfd_delete_assistance', 'wfd_delete_assistance');
+add_action('wp_ajax_nopriv_wfd_delete_assistance', 'wfd_delete_assistance');
+
+function wfd_delete_assistance(){
+    global $wpdb;
+    $assistance = $_POST['assistance'];
+    $tbl_assist = $wpdb->prefix."wfd_truck_assistance";
+    $tbl_assist_u = $wpdb->prefix."wfd_truck_assistance_u";
+    $sql = "DELETE FROM `$tbl_assist`, `$tbl_assist_u` USING `$tbl_assist`, `$tbl_assist_u` WHERE `$tbl_assist_u`.`aid` = `$tbl_assist`.`id` AND `$tbl_assist`.`assistance` = '$assistance'";
+    $result_array = array();
+    if($wpdb->query($sql) == false){
+        $wpdb->query("DELETE FROM `$tbl_assist` WHERE `$tbl_assist`.`assistance` = '$assistance'");
+    }
+    $result_array['result'] = true;
+    $result_array['message'] = "Assistance $assistance successfully removed!";
+    echo json_encode($result_array);
+    wp_die();
+
+}
 
 function wfd_add_client()
 {
@@ -589,7 +609,7 @@ function wfd_add_truck()
 
     $result_array = array();
     $tbl_truck = $wpdb->prefix . "wfd_truck_truck_truck_info";
-    $sql_add_truck = "INSERT INTO $tbl_truck (cid, brand, weight, max_load, load_height, type, status, plateau_height, plateau_lengh, spectacle_force, cable_winch_force, crane, motorcycle, seats, uder_lift, picture, truck_ID) values ('$cid', '$new_brand', '$new_weight', '$new_max_load', '$new_load_height', '$new_truck_type', '$new_status', '$new_pheight', '$new_plength', '$new_spec_force', '$new_cable_force', '$new_crane', '$new_motorcycle', '$new_seats', '$new_under_lift', '$new_image' ,'$new_truck_id')";
+    $sql_add_truck = "INSERT INTO $tbl_truck (cid, brand, weight, max_load, load_height, type, status, plateau_height, plateau_lengh, spectacle_force, cable_winch_force, crane, motorcycle, seats, uder_lift, picture, truck_ID, outorder) values ('$cid', '$new_brand', '$new_weight', '$new_max_load', '$new_load_height', '$new_truck_type', '$new_status', '$new_pheight', '$new_plength', '$new_spec_force', '$new_cable_force', '$new_crane', '$new_motorcycle', '$new_seats', '$new_under_lift', '$new_image' ,'$new_truck_id', '$new_out_order')";
     if ($wpdb->query($sql_add_truck) != false) {
         $result_array['result'] = true;
         $result_array['message'] = __('Congratulate! Truck Data successfully created!', 'wdf_truck');
@@ -628,7 +648,7 @@ function wfd_update_truck()
 
     $result_array = array();
     $tbl_truck = $wpdb->prefix . "wfd_truck_truck_truck_info";
-    $sql_update_truck = "UPDATE $tbl_truck SET cid='$cid', brand='$new_brand', weight='$new_weight', max_load='$new_max_load', load_height='$new_load_height', type='$new_truck_type', status='$new_status', plateau_height='$new_pheight', plateau_lengh='$new_plength', spectacle_force='$new_spec_force', cable_winch_force='$new_cable_force', crane='$new_crane', motorcycle='$new_motorcycle', seats='$new_seats', uder_lift='$new_under_lift', truck_ID='$new_truck_id', picture='$picture' WHERE id='$selId'";
+    $sql_update_truck = "UPDATE $tbl_truck SET cid='$cid', brand='$new_brand', weight='$new_weight', max_load='$new_max_load', load_height='$new_load_height', type='$new_truck_type', status='$new_status', plateau_height='$new_pheight', plateau_lengh='$new_plength', spectacle_force='$new_spec_force', cable_winch_force='$new_cable_force', crane='$new_crane', motorcycle='$new_motorcycle', seats='$new_seats', uder_lift='$new_under_lift', truck_ID='$new_truck_id', picture='$picture', outorder='$new_out_order' WHERE id='$selId'";
     if ($wpdb->query($sql_update_truck) != false) {
         $result_array['result'] = true;
         $result_array['message'] = __('Congratulate! Truck Data successfully updated!', 'wfd_truck');
@@ -705,6 +725,7 @@ function wfd_update_callnum()
     } else {
         $result_array['result'] = false;
         $result_array['errorMessage'] = $wpdb->last_error;
+        $result_array['query'] = $sql_update_callnum;
     }
 
     echo json_encode($result_array);
@@ -1156,10 +1177,21 @@ function wfd_ref_truck_plugin_activation()
     `name` varchar(100) NOT NULL,
     `phone` varchar(20) NOT NULL,
     `note` varchar(500) NOT NULL,
-    `category` varchar(100) NOT NULL,
+    `category` varchar(255) NOT NULL DEFAULT '0',
       PRIMARY KEY (id)
     ) $charset_collate";
     dbDelta($sql_call_num);
+
+    $tbl_call_num_cats = $wpdb->prefix . "wfd_truck_call_num_cats";
+    $sql_call_num_cats = "CREATE TABLE `$tbl_call_num_cats` (
+      `Id` int(11) NOT NULL AUTO_INCREMENT,
+      `categories` varchar(255) NOT NULL DEFAULT '',
+      PRIMARY KEY (`Id`)
+    )$charset_collate";
+    dbDelta($sql_call_num_cats);
+    $sql_call_num_cats_insert = sprintf("INSERT INTO `$tbl_call_num_cats` VALUES (1,'%s'),(2,'%s');",
+        __('Emergency', 'wfd_truck'), __('CEO', 'wfd_truck'));
+    $wpdb->query($sql_call_num_cats_insert);
 
 
     $tbl_client_info = $wpdb->prefix . "wfd_truck_client_info";
@@ -1274,7 +1306,7 @@ function wfd_ref_truck_plugin_activation()
       PRIMARY KEY (id)
     ) $charset_collate";
     dbDelta($sql_truck_partner);
-    $sql_truck_partner_insert = sprintf("INSERT INTO `wp_wfd_truck_truck_partner` VALUES (1,'ADAC'),(2,'ADACplus'),(3,'ADAC-Truck'),(4,'AvD'),(5,'ACE');",
+    $sql_truck_partner_insert = sprintf("INSERT INTO `$tbl_truck_partner` VALUES (1,'%s'),(2,'%s'),(3,'%s'),(4,'%s'),(5,'%s');",
         __('ADAC', 'wfd_truck'), __('ADACplus', 'wfd_truck'), __('ADAC-Truck', 'wfd_truck'), __('AvD', 'wfd_truck'), __('ACE', 'wfd_truck'));
     $wpdb->query($sql_truck_partner_insert);
 
@@ -1331,6 +1363,7 @@ function wfd_ref_truck_plugin_activation()
       `qualification` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
       `rating` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
       `truck_ID` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+      `outorder` int(3) NOT NULL DEFAULT '0',
       PRIMARY KEY (id)
     ) $charset_collate";
     dbDelta($sql_truck_truck_info);
@@ -1422,27 +1455,7 @@ function wfd_admin_view_as_wp_menu()
         <div class="col-sm-12">
             <h2><?php _e('Clients List', 'wfd_truck'); ?></h2>
 
-            <table>
-                <colgroup>
-                    <col class="col-md-1">
-                    <col class="col-md-1">
-                    <col class="col-md-1">
-                    <col class="col-md-1">
-                    <col class="col-md-1">
-                    <col class="col-md-1">
-                    <col class="col-md-1">
-                </colgroup>
-                <tr>
-                    <td><input id="filter-company" placeholder="<?php _e('filter company', 'wfd_truck') ?>"></td>
-                    <td></td>
-                    <td><input id="filter-zip" placeholder="<?php _e('filter ZIP', 'wfd_truck') ?>"></td>
-                    <td><input id="filter-city" placeholder="<?php _e('filter city', 'wfd_truck') ?>"></td>
-                    <td><div></div></td>
-                    <td><div></div></td>
-                    <td><div></div></td>
-                </tr>
-            </table>
-            <table class="table table-striped" data-toggle="table" id="clients-list" data-unique-id="id">
+            <table class="table table-striped" data-toggle="table" id="clients-list" data-unique-id="id" data-filter-control="true">
                 <colgroup>
                     <col class="col-md-1">
                     <col class="col-md-1">
@@ -1457,12 +1470,12 @@ function wfd_admin_view_as_wp_menu()
                     <th data-field="id" data-visible="false"></th>
                     <th data-field="username" data-visible="false"></th>
                     <th data-field="email" data-visible="false"></th>
-                    <th data-field="company"
+                    <th data-field="company"  data-filter-control="input"
                         data-sortable="true"><?php _e('Company', 'wfd_truck'); ?></th>
                     <th data-field="street"><?php _e('Street', 'wfd_truck'); ?></th>
-                    <th data-field="zip"
+                    <th data-field="zip"  data-filter-control="input"
                         data-sortable="true"><?php _e('Zip', 'wfd_truck'); ?></th>
-                    <th data-field="city"
+                    <th data-field="city"  data-filter-control="input"
                         data-sortable="true"><?php _e('City', 'wfd_truck'); ?></th>
                     <th data-field="phone"><?php _e('Phone', 'wfd_truck'); ?></th>
                     <th data-field="note"><?php _e('Note', 'wfd_truck'); ?></th>
@@ -2232,10 +2245,10 @@ function wfd_core_data_view($res_client_info)
                     <h3><?php _e('Assistance', 'wfd_truck'); ?></h3>
                     <div class="nav" id="assistance-container" style="padding-left: 0; margin-left: 0">
                         <?php
-
+                        $i = 0;
                         foreach ($res_assistance as $pa) { ?>
                             <div class="checkbox">
-                                <label>
+                                <label style="vertical-align: top;">
                                     <?php
                                     $inputElem = '<input name="' . $pa->assistance . '" type="checkbox">';
                                     foreach ($res_assistance_u as $pmu) {
@@ -2245,8 +2258,17 @@ function wfd_core_data_view($res_client_info)
                                     }
                                     echo $inputElem;
                                     ?>
-                                    <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
-                                    <?php echo $pa->assistance ?>
+                                    <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span><?php echo $pa->assistance;?>
+                                    <?php
+                                    $i ++;
+                                    if ($i > 5){
+                                        ?>
+                                        <a class="btn-delete ml10" href="javascript:removeAssistance('<?php echo $pa->assistance;?>')" title="Remove">
+                                            <i class="glyphicon glyphicon-remove"></i>
+                                        </a>
+                                        <?php
+                                    }
+                                    ?>
                                 </label>
                             </div>
                         <?php } ?>
@@ -2278,8 +2300,7 @@ function wfd_core_data_view($res_client_info)
                                 ?>
                                 <div class="row form-group">
                                     <label class="control-label col-sm-4"
-                                           style="padding-left: 40px;line-height: 30px;"><?php echo $labelNum ?>
-                                        .</label>
+                                           style="padding-left: 40px;line-height: 30px;"><?php echo $labelNum ?>.</label>
                                     <div class="col-sm-8">
                                         <input type="text" class="form-control" name="fname"
                                                placeholder="<?php echo __('Car dealer', 'wfd_truck') . " $labelNum" ?>">
@@ -2817,6 +2838,8 @@ function wfd_pickup_driver_view()
                                                 <?php _e('C1E', 'wfd_truck'); ?>
                                             </label>
                                         </div>
+                                    </div>
+                                    <div class="col-sm-8">
                                         <div class="checkbox disabled">
                                             <label>
                                                 <input type="checkbox" value="" checked name="crane_lic">
@@ -2824,8 +2847,6 @@ function wfd_pickup_driver_view()
                                                 <?php _e('crane', 'wfd_truck'); ?>
                                             </label>
                                         </div>
-                                    </div>
-                                    <div class="col-sm-8">
                                         <div class="checkbox">
                                             <label>
                                                 <input type="checkbox" value="" checked name="kennz95">
@@ -2919,6 +2940,7 @@ function wfd_truck_pool_view()
                 <th data-field="lheight"><?php _e('Load Height', 'wfd_truck'); ?></th>
                 <th data-field="type"><?php _e('Type', 'wfd_truck'); ?></th>
                 <th class="col-xs-1" data-field="status"><?php _e('Status', 'wfd_truck'); ?></th>
+                <th class="col-xs-1" data-field="outorder"><?php _e('Status', 'wfd_truck'); ?></th>
                 <th class="col-xs-2" data-field="action" data-formatter="allActionFormatter" data-events="truckPoolActionEvents"><?php _e('Action', 'wfd_truck'); ?></th>
             </tr>
             </thead>
@@ -2933,6 +2955,16 @@ function wfd_truck_pool_view()
                     <td><?php echo $ti->load_height ?></td>
                     <td><?php echo $ti->type ?></td>
                     <td><?php echo $ti->status ?></td>
+                    <td>
+                        <?php if($ti->outorder == 1){?>
+                        <div class="checkbox">
+                            <label>
+                                <input type = "checkbox" checked >
+                                <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
+                            </label>
+                        </div>
+                        <?php } ?>
+                    </td>
                     <td></td>
                 </tr>
             <?php } ?>
@@ -3129,6 +3161,9 @@ function wfd_call_numbers_view()
     $id = $_SESSION['client_id'];
     $tbl_call_num = $wpdb->prefix . "wfd_truck_call_num";
     $res_call_num = $wpdb->get_results("select * from $tbl_call_num where cid=$id", OBJECT);
+    $tbl_call_num_cats = $wpdb->prefix . "wfd_truck_call_num_cats";
+    $res_call_num_cats = $wpdb->get_results("select * from $tbl_call_num_cats", OBJECT);
+
     ?>
     <div role="tabpanel" class="tab-pane" id="callNum">
         <h2><?php _e('Call Numbers', 'wfd_truck'); ?></h2>
@@ -3209,8 +3244,17 @@ function wfd_call_numbers_view()
                                 <div class="col-sm-4">
                                     <label><?php _e('Category', 'wfd_truck') ?></label>
                                 </div>
-                                <div class="col-sm-4"><input class="form-control"
-                                                             id="new_category">
+                                <div class="col-sm-4"><select class="form-control"
+                                                              id="new_category">
+                                        <?php
+                                        foreach ($res_call_num_cats as $cn) {
+                                            ?>
+                                            <option value="<?php echo $cn->categories ?>">
+                                                <?php echo $cn->categories ?>
+                                            </option>
+                                        <?php } ?>
+
+                                    </select>
                                 </div>
                             </div>
                             <div class="row form-group">
@@ -3488,7 +3532,7 @@ function wfd_truck_user_dashboard_fn()
         $_GET['action'] = 'profile';
 
     ?>
-    <div class="container">
+    <div class="container" style="padding-right: 60px; margin-left: -60px;">
 
         <?php
         global $wpdb;

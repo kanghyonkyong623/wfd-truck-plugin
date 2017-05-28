@@ -1185,7 +1185,7 @@ function truckPoolFunctions(){
         var new_plength = $('#new_plength').val();
         var new_seats = $('#new_seats').val();
         var new_under_lift = $('#new_under_lift').val();
-        var new_out_order = $('#new_out_order').val();
+        var new_out_order = $('#new_out_order').prop('checked') == true ? 1:0;
         var new_image=$('.profile-pic', $('#modal_add_truck'));
 
         if ($.trim(new_truck_id).length == 0)
@@ -1247,6 +1247,7 @@ function truckPoolFunctions(){
                                         lheight: new_load_height,
                                         type: new_truck_type,
                                         status: new_status,
+                                        outorder: outorderCheck(new_out_order),
                                         action: ''
                                     }
                                 });
@@ -1825,6 +1826,21 @@ function editDelActionFormatter(value, row, index) {
     ].join('');
 }
 
+function outorderCheck(checked){
+    if(checked == 0){
+        return '';
+    }
+    else{
+        return['<div class="checkbox">',
+            '<label>',
+            '<input type = "checkbox" checked >',
+            '<span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>',
+            '</label>',
+            '</div>'
+        ].join('');
+    }
+}
+
 function setcallnumIdToNavDlg(row, editMode) {
     $('#new_name').val(row.name);
     $('#new_phoneno').val(row.phone);
@@ -1888,6 +1904,38 @@ window.callNumActionEvents = {
     }
 };
 
+function removeAssistance(assistance){
+    $.post(
+        ajax_object.ajax_url,
+        {
+            action: 'wfd_delete_assistance',
+            assistance: assistance
+        },
+        function (response) {
+            if (response.result == true) {
+                ezBSAlert({
+                    messageText: response.message,
+                    alertType: "success",
+                    headerText: ajax_object.successTitle,
+                    okButtonText: ajax_object.okText
+                }).done(function (e) {
+                    var removeElem = $('input[name="' + assistance + '"]', $('#assistance-container')).closest('.checkbox');
+                    removeElem.remove();
+                });
+            }
+            else {
+                ezBSAlert({
+                    messageText: response.errorMessage,
+                    alertType: "danger",
+                    headerText: ajax_object.alertTitle,
+                    okButtonText: ajax_object.okText
+                });
+            }
+        },
+        'json'
+    )
+
+}
 
 function ezBSAlert(options) {
     var deferredObject = $.Deferred();
