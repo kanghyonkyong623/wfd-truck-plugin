@@ -1,18 +1,34 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: truck\n"
-"POT-Creation-Date: 2017-05-28 16:33+0800\n"
-"PO-Revision-Date: 2017-05-28 23:05+0200\n"
+"POT-Creation-Date: 2017-05-29 19:41+0800\n"
+"PO-Revision-Date: 2017-05-29 20:41+0800\n"
 "Last-Translator: \n"
 "Language-Team: \n"
+"Language: de_DE\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.1\n"
+"X-Generator: Poedit 1.5.7\n"
 "X-Poedit-KeywordsList: _;gettext;gettext_noop;__;_e\n"
 "X-Poedit-Basepath: .\n"
-"Language: de_DE\n"
 "X-Poedit-SearchPath-0: ..\n"
+
+#: ../wfd_truck_plugin.php:15
+msgid "WFD Truck Management"
+msgstr "Nightduty CRM"
+
+#: ../wfd_truck_plugin.php:15
+msgid "Truck Admin"
+msgstr "CRM Admin"
+
+#: ../wfd_truck_plugin.php:16
+msgid "WFD Truck Settings"
+msgstr "CRM Settings"
+
+#: ../wfd_truck_plugin.php:16
+msgid "Truck Settings"
+msgstr "CRM Settings"
 
 #: ../wfd_truck_plugin.php:76
 msgid "Please fill all of the fields!"
@@ -41,6 +57,58 @@ msgstr "Wollen Sie die Änderungen der Stammdaten speichern?"
 #: ../wfd_truck_plugin.php:80
 msgid "Please enter assistance type"
 msgstr "Bitte geben Sie eine neue Versicherung ein"
+
+#: ../wfd_truck_plugin.php:80
+msgid "Add New Truck"
+msgstr "Rufnummer hinzufügen"
+
+#: ../wfd_truck_plugin.php:80
+msgid "Edit Call Number"
+msgstr "Rufnummer bearbeiten"
+
+#: ../wfd_truck_plugin.php:80
+msgid "Truck"
+msgstr "Fahrzeug"
+
+#: ../wfd_truck_plugin.php:80
+msgid "Add New Call Number"
+msgstr "Rufnummer hinzufügen"
+
+#: ../wfd_truck_plugin.php:80
+msgid "Edit Service"
+msgstr "Leistung bearbeiten"
+
+#: ../wfd_truck_plugin.php:80
+msgid "Add New Service"
+msgstr "Leistung hinzufügen"
+
+#: ../wfd_truck_plugin.php:80 ../wfd_truck_plugin.php:1572
+#: ../wfd_truck_plugin.php:1805 ../wfd_truck_plugin.php:1883
+#: ../wfd_truck_plugin.php:2613 ../wfd_truck_plugin.php:2905
+#: ../wfd_truck_plugin.php:3125 ../wfd_truck_plugin.php:3248
+#: ../wfd_truck_plugin.php:3351 ../wfd_truck_plugin.php:3372
+msgid "Save"
+msgstr "Speichern"
+
+#: ../wfd_truck_plugin.php:80 ../wfd_truck_plugin.php:2014
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: ../wfd_truck_plugin.php:80
+msgid "View"
+msgstr "anzeigen"
+
+#: ../wfd_truck_plugin.php:80
+msgid "Remove"
+msgstr "entfernen"
+
+#: ../wfd_truck_plugin.php:80
+msgid "Copy"
+msgstr "kopieren"
+
+#: ../wfd_truck_plugin.php:80
+msgid "No data in the table"
+msgstr "Keine Einträge vorhanden"
 
 #: ../wfd_truck_plugin.php:158 ../wfd_truck_plugin.php:164
 #: ../wfd_truck_plugin.php:200 ../wfd_truck_plugin.php:206
@@ -194,8 +262,8 @@ msgstr "Firma"
 
 #: ../wfd_truck_plugin.php:1475 ../wfd_truck_plugin.php:1700
 #: ../wfd_truck_plugin.php:1839 ../wfd_truck_plugin.php:1949
-#: ../wfd_truck_plugin.php:2348 ../wfd_truck_plugin.php:2410
-#: ../wfd_truck_plugin.php:2654 ../wfd_truck_plugin.php:2716
+#: ../wfd_truck_plugin.php:2346 ../wfd_truck_plugin.php:2407
+#: ../wfd_truck_plugin.php:2651 ../wfd_truck_plugin.php:2713
 msgid "Street"
 msgstr "Straße"
 
@@ -206,30 +274,30 @@ msgstr "PLZ"
 
 #: ../wfd_truck_plugin.php:1479 ../wfd_truck_plugin.php:1704
 #: ../wfd_truck_plugin.php:1855 ../wfd_truck_plugin.php:1957
-#: ../wfd_truck_plugin.php:2349 ../wfd_truck_plugin.php:2416
-#: ../wfd_truck_plugin.php:2655 ../wfd_truck_plugin.php:2722
+#: ../wfd_truck_plugin.php:2347 ../wfd_truck_plugin.php:2413
+#: ../wfd_truck_plugin.php:2652 ../wfd_truck_plugin.php:2719
 msgid "City"
 msgstr "Ort"
 
 #: ../wfd_truck_plugin.php:1480 ../wfd_truck_plugin.php:1705
 #: ../wfd_truck_plugin.php:1863 ../wfd_truck_plugin.php:1973
-#: ../wfd_truck_plugin.php:2350 ../wfd_truck_plugin.php:2422
-#: ../wfd_truck_plugin.php:2656 ../wfd_truck_plugin.php:2728
+#: ../wfd_truck_plugin.php:2348 ../wfd_truck_plugin.php:2419
+#: ../wfd_truck_plugin.php:2653 ../wfd_truck_plugin.php:2725
 msgid "Phone"
 msgstr "Telefon"
 
 #: ../wfd_truck_plugin.php:1481 ../wfd_truck_plugin.php:1706
-#: ../wfd_truck_plugin.php:1872 ../wfd_truck_plugin.php:2004
-#: ../wfd_truck_plugin.php:2351 ../wfd_truck_plugin.php:2428
-#: ../wfd_truck_plugin.php:2657 ../wfd_truck_plugin.php:2734
-#: ../wfd_truck_plugin.php:3177 ../wfd_truck_plugin.php:3237
+#: ../wfd_truck_plugin.php:1872 ../wfd_truck_plugin.php:2003
+#: ../wfd_truck_plugin.php:2349 ../wfd_truck_plugin.php:2425
+#: ../wfd_truck_plugin.php:2654 ../wfd_truck_plugin.php:2731
+#: ../wfd_truck_plugin.php:3157 ../wfd_truck_plugin.php:3217
 msgid "Note"
 msgstr "Bemerkung"
 
 #: ../wfd_truck_plugin.php:1482 ../wfd_truck_plugin.php:1707
-#: ../wfd_truck_plugin.php:2352 ../wfd_truck_plugin.php:2658
-#: ../wfd_truck_plugin.php:2944 ../wfd_truck_plugin.php:3180
-#: ../wfd_truck_plugin.php:3299
+#: ../wfd_truck_plugin.php:2350 ../wfd_truck_plugin.php:2655
+#: ../wfd_truck_plugin.php:2941 ../wfd_truck_plugin.php:3160
+#: ../wfd_truck_plugin.php:3279
 msgid "Action"
 msgstr "Aktion"
 
@@ -258,20 +326,13 @@ msgid "Email"
 msgstr "Email"
 
 #: ../wfd_truck_plugin.php:1554 ../wfd_truck_plugin.php:1787
-#: ../wfd_truck_plugin.php:3570
+#: ../wfd_truck_plugin.php:3550
 msgid "Password"
 msgstr "Passwort"
 
 #: ../wfd_truck_plugin.php:1562 ../wfd_truck_plugin.php:1795
 msgid "Generate"
 msgstr "Generieren"
-
-#: ../wfd_truck_plugin.php:1572 ../wfd_truck_plugin.php:1805
-#: ../wfd_truck_plugin.php:1883 ../wfd_truck_plugin.php:2616
-#: ../wfd_truck_plugin.php:2908 ../wfd_truck_plugin.php:3145
-#: ../wfd_truck_plugin.php:3268 ../wfd_truck_plugin.php:3371
-msgid "Save"
-msgstr "Speichern"
 
 #: ../wfd_truck_plugin.php:1590
 msgid "Navigate to Client View"
@@ -325,399 +386,491 @@ msgstr "Webseite"
 msgid "Emergency Phone"
 msgstr "Notfallrufnummer"
 
-#: ../wfd_truck_plugin.php:2016
-msgid "Edit"
-msgstr "Bearbeiten"
-
-#: ../wfd_truck_plugin.php:2028
+#: ../wfd_truck_plugin.php:2026
 msgid "Opening Hours"
 msgstr "Öffnungszeiten"
 
-#: ../wfd_truck_plugin.php:2038
+#: ../wfd_truck_plugin.php:2036
 msgid "Location"
 msgstr "Standort"
 
-#: ../wfd_truck_plugin.php:2039
+#: ../wfd_truck_plugin.php:2037
 msgid "Mon-Fri"
 msgstr "Mo-Fr"
 
-#: ../wfd_truck_plugin.php:2040
+#: ../wfd_truck_plugin.php:2038
 msgid "Sat"
 msgstr "Sa"
 
-#: ../wfd_truck_plugin.php:2041
+#: ../wfd_truck_plugin.php:2039
 msgid "Sun"
 msgstr "So"
 
-#: ../wfd_truck_plugin.php:2046
+#: ../wfd_truck_plugin.php:2044
 msgid "Office"
 msgstr "Büro"
 
-#: ../wfd_truck_plugin.php:2082
+#: ../wfd_truck_plugin.php:2080
 msgid "Garage"
 msgstr "Werkstatt"
 
-#: ../wfd_truck_plugin.php:2118
+#: ../wfd_truck_plugin.php:2116
 msgid "Car rental"
 msgstr "Mietwagen"
 
-#: ../wfd_truck_plugin.php:2154
+#: ../wfd_truck_plugin.php:2152
 msgid "on-call duty"
 msgstr "Rufbereitschaft"
 
-#: ../wfd_truck_plugin.php:2197
+#: ../wfd_truck_plugin.php:2195
 msgid "Payment"
 msgstr "Bezahlung"
 
-#: ../wfd_truck_plugin.php:2221
+#: ../wfd_truck_plugin.php:2219
 msgid "Partner"
 msgstr "Partner"
 
-#: ../wfd_truck_plugin.php:2245
+#: ../wfd_truck_plugin.php:2243
 msgid "Assistance"
 msgstr "Versicherung"
 
-#: ../wfd_truck_plugin.php:2277 ../wfd_truck_plugin.php:2315
+#: ../wfd_truck_plugin.php:2275 ../wfd_truck_plugin.php:2313
 msgid "add"
 msgstr "hinzufügen"
 
-#: ../wfd_truck_plugin.php:2280
+#: ../wfd_truck_plugin.php:2278
 msgid "Mobi Services"
 msgstr "Mobi Services"
 
-#: ../wfd_truck_plugin.php:2293 ../wfd_truck_plugin.php:2306
+#: ../wfd_truck_plugin.php:2291 ../wfd_truck_plugin.php:2304
 msgid "Car dealer"
 msgstr "Autohaus"
 
-#: ../wfd_truck_plugin.php:2332 ../wfd_truck_plugin.php:3664
+#: ../wfd_truck_plugin.php:2330 ../wfd_truck_plugin.php:3644
 msgid "Driver"
 msgstr "Fahrer"
 
-#: ../wfd_truck_plugin.php:2346 ../wfd_truck_plugin.php:2397
-#: ../wfd_truck_plugin.php:2652 ../wfd_truck_plugin.php:2703
+#: ../wfd_truck_plugin.php:2344 ../wfd_truck_plugin.php:2395
+#: ../wfd_truck_plugin.php:2649 ../wfd_truck_plugin.php:2700
 msgid "First Name"
 msgstr "Vorname"
 
-#: ../wfd_truck_plugin.php:2347 ../wfd_truck_plugin.php:2403
-#: ../wfd_truck_plugin.php:2653 ../wfd_truck_plugin.php:2709
+#: ../wfd_truck_plugin.php:2345 ../wfd_truck_plugin.php:2401
+#: ../wfd_truck_plugin.php:2650 ../wfd_truck_plugin.php:2706
 msgid "Last Name"
 msgstr "Nachname"
 
-#: ../wfd_truck_plugin.php:2377
+#: ../wfd_truck_plugin.php:2375
 msgid "Add Driver"
 msgstr "Fahrer hinzufügen"
 
-#: ../wfd_truck_plugin.php:2389
+#: ../wfd_truck_plugin.php:2387
 msgid "Driver:"
 msgstr "Fahrer:"
 
-#: ../wfd_truck_plugin.php:2394 ../wfd_truck_plugin.php:2700
-#: ../wfd_truck_plugin.php:3661
+#: ../wfd_truck_plugin.php:2392 ../wfd_truck_plugin.php:2697
+#: ../wfd_truck_plugin.php:3641
 msgid "Core Data"
 msgstr "Stammdaten"
 
-#: ../wfd_truck_plugin.php:2438 ../wfd_truck_plugin.php:2744
+#: ../wfd_truck_plugin.php:2435 ../wfd_truck_plugin.php:2741
 msgid "Applications"
 msgstr "Einsatzzwecke"
 
-#: ../wfd_truck_plugin.php:2441
+#: ../wfd_truck_plugin.php:2438
 msgid "breakdown service"
 msgstr "Pannenhilfe"
 
-#: ../wfd_truck_plugin.php:2452
+#: ../wfd_truck_plugin.php:2449
 msgid "drag cars"
 msgstr "Schleppen PKW"
 
-#: ../wfd_truck_plugin.php:2464
+#: ../wfd_truck_plugin.php:2461
 msgid "drag < 7.5to"
 msgstr "Schleppen <7,5t"
 
-#: ../wfd_truck_plugin.php:2475
+#: ../wfd_truck_plugin.php:2472
 msgid "drag > 7.5to"
 msgstr "Schleppen >7,5t"
 
-#: ../wfd_truck_plugin.php:2486 ../wfd_truck_plugin.php:2539
-#: ../wfd_truck_plugin.php:2847
+#: ../wfd_truck_plugin.php:2483 ../wfd_truck_plugin.php:2536
+#: ../wfd_truck_plugin.php:2844
 msgid "crane"
 msgstr "Kran"
 
-#: ../wfd_truck_plugin.php:2497
+#: ../wfd_truck_plugin.php:2494
 msgid "truck service"
 msgstr "Truck-Service"
 
-#: ../wfd_truck_plugin.php:2513 ../wfd_truck_plugin.php:2819
+#: ../wfd_truck_plugin.php:2510 ../wfd_truck_plugin.php:2816
 msgid "driver photo"
 msgstr "Fahrerfoto"
 
-#: ../wfd_truck_plugin.php:2518 ../wfd_truck_plugin.php:2824
+#: ../wfd_truck_plugin.php:2515 ../wfd_truck_plugin.php:2821
 msgid "Driving Licenses"
 msgstr "Führerschein"
 
-#: ../wfd_truck_plugin.php:2525 ../wfd_truck_plugin.php:2831
+#: ../wfd_truck_plugin.php:2522 ../wfd_truck_plugin.php:2828
 msgid "C1"
 msgstr "C1"
 
-#: ../wfd_truck_plugin.php:2532 ../wfd_truck_plugin.php:2838
+#: ../wfd_truck_plugin.php:2529 ../wfd_truck_plugin.php:2835
 msgid "C1E"
 msgstr "C1E"
 
-#: ../wfd_truck_plugin.php:2548 ../wfd_truck_plugin.php:2854
+#: ../wfd_truck_plugin.php:2545 ../wfd_truck_plugin.php:2851
 msgid "Kennz 95"
 msgstr "Kennz 95"
 
-#: ../wfd_truck_plugin.php:2555
+#: ../wfd_truck_plugin.php:2552
 msgid "Clubmobil"
 msgstr "Clubmobil"
 
-#: ../wfd_truck_plugin.php:2562
+#: ../wfd_truck_plugin.php:2559
 msgid "car opening"
 msgstr "Fzg.-Öffnung"
 
-#: ../wfd_truck_plugin.php:2569 ../wfd_truck_plugin.php:2861
+#: ../wfd_truck_plugin.php:2566 ../wfd_truck_plugin.php:2858
 msgid "Qualification"
 msgstr "Ausbildung"
 
-#: ../wfd_truck_plugin.php:2576 ../wfd_truck_plugin.php:2868
+#: ../wfd_truck_plugin.php:2573 ../wfd_truck_plugin.php:2865
 msgid "motor mechatronics"
 msgstr "KFZ-Mechatroniker"
 
-#: ../wfd_truck_plugin.php:2583 ../wfd_truck_plugin.php:2875
+#: ../wfd_truck_plugin.php:2580 ../wfd_truck_plugin.php:2872
 msgid "motor foreman"
 msgstr "KFZ-Meister"
 
-#: ../wfd_truck_plugin.php:2590 ../wfd_truck_plugin.php:2882
+#: ../wfd_truck_plugin.php:2587 ../wfd_truck_plugin.php:2879
 msgid "learned"
 msgstr "angelernt"
 
-#: ../wfd_truck_plugin.php:2599 ../wfd_truck_plugin.php:2891
+#: ../wfd_truck_plugin.php:2596 ../wfd_truck_plugin.php:2888
 msgid "unlearned"
 msgstr "ungelernt"
 
-#: ../wfd_truck_plugin.php:2606 ../wfd_truck_plugin.php:2898
+#: ../wfd_truck_plugin.php:2603 ../wfd_truck_plugin.php:2895
 msgid "commercial vehicle technology"
 msgstr "Nutzfzg,-Technik"
 
-#: ../wfd_truck_plugin.php:2638
+#: ../wfd_truck_plugin.php:2635
 msgid "Pickup  Driver"
 msgstr "Pickupfahrer"
 
-#: ../wfd_truck_plugin.php:2683
+#: ../wfd_truck_plugin.php:2680
 msgid "Add Pickup Driver"
 msgstr "Pickupfahrer hinzufügen"
 
-#: ../wfd_truck_plugin.php:2695
+#: ../wfd_truck_plugin.php:2692
 msgid "Truck Driver:"
 msgstr "Pickupfahrer:"
 
-#: ../wfd_truck_plugin.php:2747
+#: ../wfd_truck_plugin.php:2744
 msgid "Pickups < 250km"
 msgstr "Pickups < 250km"
 
-#: ../wfd_truck_plugin.php:2758
+#: ../wfd_truck_plugin.php:2755
 msgid "Pickups < 500km"
 msgstr "Pickups < 500km"
 
-#: ../wfd_truck_plugin.php:2770
+#: ../wfd_truck_plugin.php:2767
 msgid "Pickups > 500km"
 msgstr "Pickups > 500km"
 
-#: ../wfd_truck_plugin.php:2781
+#: ../wfd_truck_plugin.php:2778
 msgid "cars"
 msgstr "PKW"
 
-#: ../wfd_truck_plugin.php:2792
+#: ../wfd_truck_plugin.php:2789
 msgid "truck < 3.5 to"
 msgstr "LKW <3,5t"
 
-#: ../wfd_truck_plugin.php:2803
+#: ../wfd_truck_plugin.php:2800
 msgid "truck < 7.5 to"
 msgstr "LKW <7,5t"
 
-#: ../wfd_truck_plugin.php:2929 ../wfd_truck_plugin.php:3669
+#: ../wfd_truck_plugin.php:2926 ../wfd_truck_plugin.php:3649
 msgid "Truck Pool"
 msgstr "Fuhrpark"
 
-#: ../wfd_truck_plugin.php:2934 ../wfd_truck_plugin.php:2998
+#: ../wfd_truck_plugin.php:2931 ../wfd_truck_plugin.php:2995
 msgid "ID"
 msgstr "Kennzeichen"
 
-#: ../wfd_truck_plugin.php:2936 ../wfd_truck_plugin.php:3005
+#: ../wfd_truck_plugin.php:2933 ../wfd_truck_plugin.php:3001
 msgid "Brand"
 msgstr "Marke"
 
-#: ../wfd_truck_plugin.php:2937 ../wfd_truck_plugin.php:3012
+#: ../wfd_truck_plugin.php:2934 ../wfd_truck_plugin.php:3007
 msgid "Weight"
 msgstr "ZGG, kg"
 
-#: ../wfd_truck_plugin.php:2939
+#: ../wfd_truck_plugin.php:2936
 msgid "Max Load"
 msgstr "Nutzlast"
 
-#: ../wfd_truck_plugin.php:2940
+#: ../wfd_truck_plugin.php:2937
 msgid "Load Height"
 msgstr "Ladehöhe"
 
-#: ../wfd_truck_plugin.php:2941 ../wfd_truck_plugin.php:3033
-#: ../wfd_truck_plugin.php:3113
+#: ../wfd_truck_plugin.php:2938 ../wfd_truck_plugin.php:3025
+#: ../wfd_truck_plugin.php:3090
 msgid "Type"
 msgstr "Art"
 
-#: ../wfd_truck_plugin.php:2942 ../wfd_truck_plugin.php:2943
-#: ../wfd_truck_plugin.php:3040
+#: ../wfd_truck_plugin.php:2939 ../wfd_truck_plugin.php:3031
 msgid "Status"
 msgstr "Status"
 
-#: ../wfd_truck_plugin.php:2974
+#: ../wfd_truck_plugin.php:2940
+msgid "Out of Order"
+msgstr "Out of order"
+
+#: ../wfd_truck_plugin.php:2971
 msgid "add Truck"
 msgstr "Fahrzeug hinzufügen"
 
-#: ../wfd_truck_plugin.php:2994
+#: ../wfd_truck_plugin.php:2991
 msgid "Truck Data"
 msgstr "Fahrzeugdaten"
 
-#: ../wfd_truck_plugin.php:3019
+#: ../wfd_truck_plugin.php:3013
 msgid "Max load"
 msgstr "Nutzlast"
 
-#: ../wfd_truck_plugin.php:3026
+#: ../wfd_truck_plugin.php:3019
 msgid "Load height"
 msgstr "Ladehöhe"
 
-#: ../wfd_truck_plugin.php:3047
+#: ../wfd_truck_plugin.php:3037
 msgid "Plateau height"
 msgstr "Plateau Tragkraft"
 
-#: ../wfd_truck_plugin.php:3056
+#: ../wfd_truck_plugin.php:3043
 msgid "Spectacle force"
 msgstr "Hubbrille Tragkraft"
 
-#: ../wfd_truck_plugin.php:3063
+#: ../wfd_truck_plugin.php:3051
 msgid "Cable winch force"
 msgstr "Winde Zugkraft"
 
-#: ../wfd_truck_plugin.php:3070 ../wfd_truck_plugin.php:3117
+#: ../wfd_truck_plugin.php:3057 ../wfd_truck_plugin.php:3095
 msgid "Crane"
 msgstr "Kran"
 
-#: ../wfd_truck_plugin.php:3077
+#: ../wfd_truck_plugin.php:3063
 msgid "Plateau length"
 msgstr "Plateau Länge"
 
-#: ../wfd_truck_plugin.php:3084
+#: ../wfd_truck_plugin.php:3069
 msgid "Motorcycle"
 msgstr "Motorrad"
 
-#: ../wfd_truck_plugin.php:3094
+#: ../wfd_truck_plugin.php:3078
 msgid "Seats"
 msgstr "Sitzplätze"
 
-#: ../wfd_truck_plugin.php:3101
+#: ../wfd_truck_plugin.php:3084
 msgid "Under lift"
 msgstr "Unterfahrlift"
 
-#: ../wfd_truck_plugin.php:3115
+#: ../wfd_truck_plugin.php:3093
 msgid "Rig"
 msgstr "Schleppfahrzeug"
 
-#: ../wfd_truck_plugin.php:3116
+#: ../wfd_truck_plugin.php:3094
 msgid "Spectacle truck"
 msgstr "Brillenfahrzeuge\t\t\t\t\t"
 
-#: ../wfd_truck_plugin.php:3118
+#: ../wfd_truck_plugin.php:3096
 msgid "truck salvage"
 msgstr "LKW Berger"
 
-#: ../wfd_truck_plugin.php:3130
+#: ../wfd_truck_plugin.php:3110
 msgid "truck photo"
 msgstr "Fahrzeugfoto"
 
-#: ../wfd_truck_plugin.php:3137
+#: ../wfd_truck_plugin.php:3117
 msgid "Out of order"
 msgstr "Out of order"
 
-#: ../wfd_truck_plugin.php:3169 ../wfd_truck_plugin.php:3672
+#: ../wfd_truck_plugin.php:3149 ../wfd_truck_plugin.php:3652
 msgid "Call Numbers"
 msgstr "Rufnummern"
 
-#: ../wfd_truck_plugin.php:3175 ../wfd_truck_plugin.php:3221
+#: ../wfd_truck_plugin.php:3155 ../wfd_truck_plugin.php:3201
 msgid "Name"
 msgstr "Bezeichnung"
 
-#: ../wfd_truck_plugin.php:3176 ../wfd_truck_plugin.php:3229
+#: ../wfd_truck_plugin.php:3156 ../wfd_truck_plugin.php:3209
 msgid "Phone no"
 msgstr "Rufnummer"
 
-#: ../wfd_truck_plugin.php:3179 ../wfd_truck_plugin.php:3245
+#: ../wfd_truck_plugin.php:3159 ../wfd_truck_plugin.php:3225
 msgid "Category"
 msgstr "Kategorie"
 
-#: ../wfd_truck_plugin.php:3199
+#: ../wfd_truck_plugin.php:3179
 msgid "add No"
 msgstr "Nummer hinzufügen"
 
-#: ../wfd_truck_plugin.php:3289
+#: ../wfd_truck_plugin.php:3269
 msgid "Service Prices"
 msgstr "Leistungen"
 
-#: ../wfd_truck_plugin.php:3295 ../wfd_truck_plugin.php:3339
+#: ../wfd_truck_plugin.php:3275 ../wfd_truck_plugin.php:3319
 msgid "Service"
 msgstr "Leistung"
 
-#: ../wfd_truck_plugin.php:3297 ../wfd_truck_plugin.php:3347
+#: ../wfd_truck_plugin.php:3277 ../wfd_truck_plugin.php:3327
 msgid "Description"
 msgstr "Beschreibung"
 
-#: ../wfd_truck_plugin.php:3298 ../wfd_truck_plugin.php:3355
+#: ../wfd_truck_plugin.php:3278 ../wfd_truck_plugin.php:3335
 msgid "Price"
 msgstr "Preis"
 
-#: ../wfd_truck_plugin.php:3317
+#: ../wfd_truck_plugin.php:3297
 msgid "add Service"
 msgstr "Leistung hinzufügen"
 
-#: ../wfd_truck_plugin.php:3387 ../wfd_truck_plugin.php:3677
+#: ../wfd_truck_plugin.php:3367 ../wfd_truck_plugin.php:3657
 msgid "Handover"
 msgstr "Übergabe"
 
-#: ../wfd_truck_plugin.php:3549
+#: ../wfd_truck_plugin.php:3369
+msgid "Step 1"
+msgstr "Schritt 1"
+
+#: ../wfd_truck_plugin.php:3370
+msgid "Step 2"
+msgstr "Schritt 2"
+
+#: ../wfd_truck_plugin.php:3371
+msgid "Step 3"
+msgstr "Schritt 3"
+
+#: ../wfd_truck_plugin.php:3378
+msgid "Company: Truck Ltd"
+msgstr "Firma:"
+
+#: ../wfd_truck_plugin.php:3380
+msgid "Date:"
+msgstr "Datum:"
+
+#: ../wfd_truck_plugin.php:3383
+msgid "Time:"
+msgstr "Zeit:"
+
+#: ../wfd_truck_plugin.php:3386
+msgid "Handover by:"
+msgstr "Übergabe durch:"
+
+#: ../wfd_truck_plugin.php:3390 ../wfd_truck_plugin.php:3464
+#: ../wfd_truck_plugin.php:3482
+msgid "Next"
+msgstr "Weiter"
+
+#: ../wfd_truck_plugin.php:3396
+msgid "standby driver"
+msgstr "Bereitschaftsfahrer"
+
+#: ../wfd_truck_plugin.php:3400
+msgid "Max"
+msgstr "Fax"
+
+#: ../wfd_truck_plugin.php:3420 ../wfd_truck_plugin.php:3451
+msgid "Top 20"
+msgstr ""
+
+#: ../wfd_truck_plugin.php:3421 ../wfd_truck_plugin.php:3452
+msgid "International"
+msgstr ""
+
+#: ../wfd_truck_plugin.php:3422 ../wfd_truck_plugin.php:3453
+msgid "Europa"
+msgstr ""
+
+#: ../wfd_truck_plugin.php:3423 ../wfd_truck_plugin.php:3454
+msgid "Asia"
+msgstr ""
+
+#: ../wfd_truck_plugin.php:3424 ../wfd_truck_plugin.php:3455
+msgid "America"
+msgstr ""
+
+#: ../wfd_truck_plugin.php:3429
+msgid "standby trucks"
+msgstr "Bereitschaftsfahrzeuge"
+
+#: ../wfd_truck_plugin.php:3433
+msgid "truck 1"
+msgstr "Truck 1"
+
+#: ../wfd_truck_plugin.php:3438
+msgid "truck 2"
+msgstr "Truck 2"
+
+#: ../wfd_truck_plugin.php:3443
+msgid "truck 3"
+msgstr "Truck 3"
+
+#: ../wfd_truck_plugin.php:3471 ../wfd_truck_plugin.php:3487
+#: ../wfd_truck_plugin.php:3499
+msgid "Back"
+msgstr "Zurück"
+
+#: ../wfd_truck_plugin.php:3493
+msgid "Open Pdf File"
+msgstr "PDF Datei öffnen"
+
+#: ../wfd_truck_plugin.php:3496
+msgid "Save / Send"
+msgstr "Speichern & senden"
+
+#: ../wfd_truck_plugin.php:3529
 msgid "Logedout"
 msgstr "Logout"
 
-#: ../wfd_truck_plugin.php:3565
+#: ../wfd_truck_plugin.php:3545
 msgid "Username"
 msgstr "Username"
 
-#: ../wfd_truck_plugin.php:3575 ../wfd_truck_plugin.php:3577
+#: ../wfd_truck_plugin.php:3555 ../wfd_truck_plugin.php:3557
 msgid "Login"
 msgstr "Login"
 
-#: ../wfd_truck_plugin.php:3605
+#: ../wfd_truck_plugin.php:3585
 msgid "Back to admin view"
 msgstr "Zurück zur Admin Ansicht"
 
-#: ../wfd_truck_plugin.php:3613
+#: ../wfd_truck_plugin.php:3593
 msgid "Welcome"
 msgstr "Willkommen"
 
-#: ../wfd_truck_plugin.php:3615 ../wfd_truck_plugin.php:3644
+#: ../wfd_truck_plugin.php:3595 ../wfd_truck_plugin.php:3624
 msgid "Logout"
 msgstr "Logout"
 
-#: ../wfd_truck_plugin.php:3633 ../wfd_truck_plugin.php:3638
+#: ../wfd_truck_plugin.php:3613 ../wfd_truck_plugin.php:3618
 msgid "Profile"
 msgstr "Profil"
 
-#: ../wfd_truck_plugin.php:3640
+#: ../wfd_truck_plugin.php:3620
 msgid "Reviews"
 msgstr "Bericht"
 
-#: ../wfd_truck_plugin.php:3666
+#: ../wfd_truck_plugin.php:3646
 msgid "Pickup Driver"
 msgstr "Pickupfahrer"
 
-#: ../wfd_truck_plugin.php:3675
+#: ../wfd_truck_plugin.php:3655
 msgid "Prices"
 msgstr "Preise"
+
+#~ msgid "Save Driver"
+#~ msgstr "Speichern"
 
 #~ msgid "SL#"
 #~ msgstr "SL-ID"

@@ -3,6 +3,7 @@
  */
 
 $(document).ready(function ($) {
+    setTableMessages();
 
     function validateEmail(sEmail) {
         var filter = /^[\w\-\.\+]+\@[a-zA-Z0-9\.\-]+\.[a-zA-z0-9]{2,4}$/;
@@ -430,6 +431,7 @@ $(document).ready(function ($) {
         }
     });
 
+
     function filterByText(text, table, col) {
         var trArray = $('tr', table);
         if (text.toUpperCase() == "ALL") {
@@ -454,6 +456,15 @@ $(document).ready(function ($) {
         }
     }
 });
+
+function setTableMessages(){
+    $('table[data-toggle="table"]').bootstrapTable({
+        formatNoMatches: function () {
+            return 'No data found';
+        }
+    });
+    $('table[data-toggle="table"]').bootstrapTable({locale:'de-DE'});
+}
 
 function setClientIdToNavDlg(clientId, editMode) {
     var formElem = $('#modal_nav_client');
@@ -702,10 +713,10 @@ function driverFunctions(){
 
 function enableDriverEdit(desabled) {
     if(desabled){
-        $('#driver-save').html('<span class="glyphicon glyphicon-pencil"></span> Edit');
+        $('#driver-save').html('<span class="glyphicon glyphicon-pencil"></span>' + ajax_object.editButtonText);
     }
     else{
-        $('#driver-save').html('<span class="glyphicon glyphicon-floppy-disk"></span> Save');
+        $('#driver-save').html('<span class="glyphicon glyphicon-floppy-disk"></span>' + ajax_object.saveButtonText);
     }
     $('input', $('#modal-driver')).prop('disabled', desabled);
     $('input', $('#driver-application-form')).rating('create');
@@ -1001,10 +1012,10 @@ function pickupDriverFunctions(){
 
 function enablePickupDriverEdit(desabled) {
     if(desabled){
-        $('#pickup-driver-save').html('<span class="glyphicon glyphicon-pencil"></span> Edit');
+        $('#pickup-driver-save').html('<span class="glyphicon glyphicon-pencil"></span>' + ajax_object.editButtonText);
     }
     else{
-        $('#pickup-driver-save').html('<span class="glyphicon glyphicon-floppy-disk"></span> Save');
+        $('#pickup-driver-save').html('<span class="glyphicon glyphicon-floppy-disk"></span>' + ajax_object.saveButtonText);
     }
     $('input', $('#modal-pickup-driver')).prop('disabled', desabled);
     $('input', $('#pickup-driver-application-form')).rating('create');
@@ -1781,30 +1792,48 @@ function callNumFunctions(){
 
 function allActionFormatter(value, row, index){
     return [
-        '<a class="btn-view ml10" href="javascript:void(0)" title="View">',
+        '<a class="btn-view ml10" href="javascript:void(0)" title="',
+        ajax_object.viewButtonText,
+        '">',
         '<i class="glyphicon glyphicon-list"></i>',
         '</a>',
-        '<a class="btn-edit ml10" href="javascript:void(0)" title="Edit">',
+        '<a class="btn-edit ml10" href="javascript:void(0)" title="',
+        ajax_object.editButtonText,
+        '">',
         '<i class="glyphicon glyphicon-edit"></i>',
         '</a>',
-        '<a class="btn-delete ml10" href="javascript:void(0)" title="Remove">',
+        '<a class="btn-delete ml10" href="javascript:void(0)" title="',
+        ajax_object.removeButtonText,
+        '">',
         '<i class="glyphicon glyphicon-remove"></i>',
         '</a>',
-        '<a class="btn-copy ml10" href="javascript:void(0)" title="Copy">',
+        '<a class="btn-copy ml10" href="javascript:void(0)" title="',
+        ajax_object.copyButtonText,
+        '">',
         '<i class="glyphicon glyphicon-floppy-disk"></i>',
         '</a>'
     ].join('');
 }
 
+function formatNoMatches(){
+    return 'no data';
+}
+
 function clientsActionFormatter(value, row, index){
     return [
-        '<a class="btn-view ml10" href="javascript:void(0)" title="View">',
+        '<a class="btn-view ml10" href="javascript:void(0)" title="',
+        ajax_object.viewButtonText,
+        '">',
         '<i class="glyphicon glyphicon-list"></i>',
         '</a>',
-        '<a class="btn-edit ml10" href="javascript:void(0)" title="Edit">',
+        '<a class="btn-edit ml10" href="javascript:void(0)" title="',
+        ajax_object.editButtonText,
+        '">',
         '<i class="glyphicon glyphicon-edit"></i>',
         '</a>',
-        '<a class="btn-delete ml10" href="javascript:void(0)" title="Remove">',
+        '<a class="btn-delete ml10" href="javascript:void(0)" title="',
+        ajax_object.removeButtonText,
+        '">',
         '<i class="glyphicon glyphicon-remove"></i>',
         '</a>'
     ].join('');
@@ -1812,10 +1841,14 @@ function clientsActionFormatter(value, row, index){
 
 function editDelActionFormatter(value, row, index) {
     return [
-        '<a class="btn-edit ml10" href="javascript:void(0)" title="Edit">',
+        '<a class="btn-edit ml10" href="javascript:void(0)" title="',
+        ajax_object.editButtonText,
+        '">',
         '<i class="glyphicon glyphicon-edit"></i>',
         '</a>',
-        '<a class="btn-delete ml10" href="javascript:void(0)" title="Remove">',
+        '<a class="btn-delete ml10" href="javascript:void(0)" title="',
+        ajax_object.removeButtonText,
+        '">',
         '<i class="glyphicon glyphicon-remove"></i>',
         '</a>'
 
