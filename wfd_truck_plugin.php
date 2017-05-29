@@ -12,8 +12,8 @@ add_action('admin_menu', 'wfd_truck_ltd_admin_menu_fn');
 
 function wfd_truck_ltd_admin_menu_fn()
 {
-    add_menu_page(__('WFD Truck Management', 'wfd_truck'), __('Truck Admin', 'wfd_truck'), 'manage_options', 'wfd_truck_admin_view', 'wfd_admin_view_as_wp_menu');
-    add_submenu_page(__('WFD Truck Settings', 'wfd_truck'), __('Truck Settings', 'wfd_truck'), 'Settings', 'manage_options', 'wfd_truck_settings', 'wfd_truck_settings_fn');
+    add_menu_page('Nightduty CRM', 'CRM Admin', 'manage_options', 'wfd_truck_admin_view', 'wfd_admin_view_as_wp_menu');
+    add_submenu_page('wfd_truck_admin_view', 'CRM Settings', 'CRM Settings', 'manage_options', 'wfd_truck_settings', 'wfd_truck_settings_fn');
 }
 
 add_action('plugins_loaded', 'plugin_init');
@@ -1448,7 +1448,7 @@ function wfd_admin_view_as_wp_menu()
     if (count($res_client_view_url) > 0) {
         $nav_url = $res_client_view_url[0]->url;
     } else {
-        $nav_url = menu_page_url('wfd_truck_settings');
+        $nav_url = menu_page_url('wfd_truck_settings', false);
     }
     my_enqueue();
     ?>
