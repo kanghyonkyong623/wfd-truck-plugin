@@ -289,3 +289,6 @@ input[type=time]::-webkit-outer-spin-button {
     from {bottom: 30px; opacity: 1;}
     to {bottom: 0; opacity: 0;}
 }
+.radio label, .checkbox label {
+    display: inline-flex !important;
+}

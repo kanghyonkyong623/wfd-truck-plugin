@@ -409,23 +409,25 @@ $(document).ready(function ($) {
             messageText: ajax_object.enterNewAssistanceMessage,
             alertType: "primary"
         }).done(function (e) {
-            $('#assistance-container').append('<div class="checkbox"><label><input type="checkbox" name="' + e + '"><span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>' +
-                e + '</label></div>');
+            if($.trim(e).length > 0) {
+                $('#assistance-container').append('<div class="checkbox"><label><input type="checkbox" name="' + e + '"><span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>' +
+                    e + '</label></div>');
+            }
         });
     });
 
     $('#add-mobi-service').click(function (e) {
-        var num = 3;
-        var placeHolder = "Car dealer";
-        var mobiContainer = $('#mobi-service-container');
-        var placeHolderTemp = $('input:last', mobiContainer).prop('placeholder');
-        var lastSpace = placeHolderTemp.lastIndexOf(' ');
-        placeHolder = placeHolderTemp.substr(0, lastSpace);
-        num = placeHolderTemp.substr(lastSpace, placeHolderTemp.length-lastSpace);
-        num = parseInt(num) + 1;
-        $('#mobi-service-container').append('<div class="row form-group"><label class="control-label col-sm-4" style="padding-left: 40px;line-height: 30px;">' +
-            num + '.</label><div class="col-sm-8"><input type="text" class="form-control" name="fname" value="" placeholder="' +
-            placeHolder + ' ' + num + '"></div></div>')
+        if ($.trim(e).length > 0) {
+            var mobiContainer = $('#mobi-service-container');
+            var placeHolderTemp = $('input:last', mobiContainer).prop('placeholder');
+            var lastSpace = placeHolderTemp.lastIndexOf(' ');
+            var placeHolder = placeHolderTemp.substr(0, lastSpace);
+            var num = placeHolderTemp.substr(lastSpace, placeHolderTemp.length - lastSpace);
+            num = parseInt(num) + 1;
+            $('#mobi-service-container').append('<div class="row form-group"><label class="control-label col-sm-4" style="padding-left: 40px;line-height: 30px;">' +
+                num + '.</label><div class="col-sm-8"><input type="text" class="form-control" name="fname" value="" placeholder="' +
+                placeHolder + ' ' + num + '"></div></div>')
+        }
     });
 
     function filterByText(text, table, col) {
@@ -1146,10 +1148,9 @@ function truckPoolFunctions(){
             $('#new_under_lift').val('');
             $('#new_out_order').val('');
             $('.profile-pic', $('#modal_add_truck')).attr("src", backImgUrl);
-            $('#truckModalLabel').text('Add New Truck');
-            $('#modal_add_truck').data('editMode', false);
+            $('#truckModalLabel').text(ajax_object.newTruckTitle);
             $('#btn_save_truck').prop('disabled', false);
-            $('#modal_add_truck').modal('show');
+            $('#modal_add_truck').data('editMode', false).modal('show');
         }
         else{
             setTruckDataToDlg("", copiedTruckId);
@@ -1323,6 +1324,7 @@ function truckPoolFunctions(){
                                     lheight: new_load_height,
                                     type: new_truck_type,
                                     status: new_status,
+                                    outorder: outorderCheck(new_out_order),
                                     action: ''
                                 }]);
 
@@ -1367,15 +1369,10 @@ function setTruckDataToDlg(row, selId) {
             $('#new_crane').val(response.crane);
             $('#new_seats').val(response.seats);
             $('#new_under_lift').val(response.uder_lift);
-            $('#truckModalLabel').text('Truck: ' + response.truck_ID + '-' + response.brand);
+            $('#truckModalLabel').text(ajax_object.editTruckTitle + ': ' + response.truck_ID + '-' + response.brand);
             $('.profile-pic', $('#modal_add_truck')).prop('src', response.picture);
-            var motorcheck = response.motorcycle;
-            var $checkbox = $('#new_motorcycle');
-            if (motorcheck=="true"){
-                $checkbox.prop('checked', true);
-            }else {
-                $checkbox.prop('checked', false);
-            }
+            $('#new_motorcycle').prop('checked', response.motorcycle=="true");
+            $('#new_out_order').prop('checked', response.outorder=="1");
         },
         'json'
     );
@@ -1577,7 +1574,7 @@ function pricesFunctions() {
         $('#new_service').val('');
         $('#new_description').val('');
         $('#new_price').val('');
-        $('#serviceModalLabel').text('Add New Service');
+        $('#serviceModalLabel').text(ajax_object.newPricesTitle);
         $('#modal_add_service')
             .data('editMode', false)
             .modal('show');
@@ -1596,7 +1593,7 @@ window.priceActionEvents = {
     'click .btn-edit': function (e, value, row, index) {
         var selId = row.id;
         setServiceDataToDlg(row, true);
-        $('#serviceModalLabel').text('Service Edit');
+        $('#serviceModalLabel').text(ajax_object.editPricesTitle);
         $('#modal_add_service')
             .data('editMode', true)
             .data('selMode', selId)
@@ -1777,9 +1774,8 @@ function callNumFunctions(){
         $('#new_phoneno').val('');
         $('#new_callnote').val('');
         $('#new_category').val('');
-        $('#callnumModalLabel').text('Add New Call Number');
-        $('#modal_add_callnum').data('editMode', false);
-        $('#modal_add_callnum').modal('show');
+        $('#callnumModalLabel').text(ajax_object.newCallNumTitle);
+        $('#modal_add_callnum').data('editMode', false).modal('show');
     });
 }
 
@@ -1832,8 +1828,8 @@ function outorderCheck(checked){
     }
     else{
         return['<div class="checkbox">',
-            '<label>',
-            '<input type = "checkbox" checked >',
+            '<label class="col-xs-offset-5">',
+            '<input type = "checkbox" checked disabled>',
             '<span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>',
             '</label>',
             '</div>'
@@ -1852,7 +1848,7 @@ window.callNumActionEvents = {
     'click .btn-edit': function (e, value, row, index) {
         var selId = row.id;
         setcallnumIdToNavDlg(row, true);
-        $('#callnumModalLabel').text('Call Number Edit');
+        $('#callnumModalLabel').text(ajax_object.editCallNumTitle);
         $('#modal_add_callnum')
             .data('editMode', true)
             .data('selMode', selId)

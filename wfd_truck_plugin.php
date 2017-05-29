@@ -77,7 +77,7 @@ function my_enqueue()
             'alertTitle' => __('Alert', 'wfd_truck'), 'okText' => __('OK', 'wfd_truck'),
             'successTitle' => __('Succeed', 'wfd_truck'), 'deleteConformMessage' => __('Do you confirm to delete?', 'wfd_truck'),
             'saveConformMessage' => __('Do you want to save changes of core data?', 'wfd_truck'), 'coreDataEditMode' => $_SESSION['edit_mode'],
-            'enterNewAssistanceMessage' => __('Please enter assistance type', 'wfd_truck')));
+            'enterNewAssistanceMessage' => __('Please enter assistance type', 'wfd_truck'), 'newTruckTitle'=>__('Add New Truck', 'wfd_truck'), 'editCallNumTitle'=>__('Edit Call Number', 'wfd_truck'), 'editTruckTitle'=>__('Truck', 'wfd_truck'), 'newCallNumTitle'=>__('Add New Call Number', 'wfd_truck'), 'editPricesTitle'=>__('Edit Service', 'wfd_truck'), 'newPricesTitle'=>__('Add New Service', 'wfd_truck')));
 }
 
 add_action('wp_ajax_wfd_add_client', 'wfd_add_client');
@@ -2939,8 +2939,8 @@ function wfd_truck_pool_view()
                     data-sortable="true"><?php _e('Max Load', 'wfd_truck'); ?></th>
                 <th data-field="lheight"><?php _e('Load Height', 'wfd_truck'); ?></th>
                 <th data-field="type"><?php _e('Type', 'wfd_truck'); ?></th>
-                <th class="col-xs-1" data-field="status"><?php _e('Status', 'wfd_truck'); ?></th>
-                <th class="col-xs-1" data-field="outorder"><?php _e('Status', 'wfd_truck'); ?></th>
+                <th class="col-xs-1" data-field="status" data-visible="false"><?php _e('Status', 'wfd_truck'); ?></th>
+                <th data-field="outorder"><?php _e('Out of Order', 'wfd_truck'); ?></th>
                 <th class="col-xs-2" data-field="action" data-formatter="allActionFormatter" data-events="truckPoolActionEvents"><?php _e('Action', 'wfd_truck'); ?></th>
             </tr>
             </thead>
@@ -2958,8 +2958,8 @@ function wfd_truck_pool_view()
                     <td>
                         <?php if($ti->outorder == 1){?>
                         <div class="checkbox">
-                            <label>
-                                <input type = "checkbox" checked >
+                            <label class="col-xs-offset-5">
+                                <input type = "checkbox" checked disabled>
                                 <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
                             </label>
                         </div>
@@ -3386,38 +3386,38 @@ function wfd_handover_view()
     <div role="tabpanel" class="tab-pane" id="handover">
         <h2><?php _e('Handover', 'wfd_truck'); ?></h2>
         <ul class="nav nav-tabs">
-            <li class="active"><a data-toggle="tab" href="#step1">Step 1</a></li>
-            <li><a data-toggle="tab" href="#step2">Step 2</a></li>
-            <li><a data-toggle="tab" href="#step3">Step 3</a></li>
-            <li><a data-toggle="tab" href="#save">Save</a></li>
+            <li class="active"><a data-toggle="tab" href="#step1"><?php _e('Step 1', 'wfd_truck')?></a></li>
+            <li><a data-toggle="tab" href="#step2"><?php _e('Step 2', 'wfd_truck')?></a></li>
+            <li><a data-toggle="tab" href="#step3"><?php _e('Step 3', 'wfd_truck')?></a></li>
+            <li><a data-toggle="tab" href="#save"><?php _e('Save', 'wfd_truck')?></a></li>
         </ul>
 
         <div class="tab-content">
             <div id="step1" class="tab-pane fade in active">
                 <div class="container">
-                    <h3>Company: Truck Ltd</h3>
+                    <h3><?php _e('Company: Truck Ltd', 'wfd_truck')?></h3>
                     <div class="col-sm-2">
-                        <h3>Date:</h3>
+                        <h3><?php _e('Date:', 'wfd_truck')?></h3>
                     </div>
                     <div class="col-sm-2">
-                        <h3>Time:</h3>
+                        <h3><?php _e('Time:', 'wfd_truck')?></h3>
                     </div>
                     <div class="col-sm-2">
-                        <h3>Handover by:</h3>
+                        <h3><?php _e('Handover by:', 'wfd_truck')?></h3>
                     </div>
                 </div>
                 <button type="button" class="btn btn-success"><span
-                            class="glyphicon glyphicon-forward"></span> Next
+                            class="glyphicon glyphicon-forward"></span> <?php _e('Next', 'wfd_truck')?>
                 </button>
             </div>
 
             <div id="step2" class="tab-pane fade">
                 <div class="col-sm-3">
-                    <h3>standby driver</h3>
+                    <h3><?php _e('standby driver', 'wfd_truck')?></h3>
                     <table class="table table-hover">
                         <tbody>
                         <tr>
-                            <td>Max</td>
+                            <td><?php _e('Max', 'wfd_truck')?></td>
                             <td><a href="#" onClick="return confirm('Are you sure?')"><span
                                             class="glyphicon glyphicon-trash"></span></a></td>
                         </tr>
@@ -3437,30 +3437,30 @@ function wfd_handover_view()
                     <span class="glyphicon glyphicon-user"></span><span
                             class="glyphicon glyphicon-plus"></span>
                     <select class="selectpicker form-control">
-                        <option>Top 20</option>
-                        <option>International</option>
-                        <option>Euroupa</option>
-                        <option>Asien</option>
-                        <option>Amerikan</option>
+                        <option><?php _e('Top 20', 'wfd_truck')?></option>
+                        <option><?php _e('International', 'wfd_truck')?></option>
+                        <option><?php _e('Europa', 'wfd_truck')?></option>
+                        <option><?php _e('Asia', 'wfd_truck')?></option>
+                        <option><?php _e('America', 'wfd_truck')?></option>
                     </select>
 
                 </div>
                 <div class="col-sm-3">
-                    <h3>standby trucks</h3>
+                    <h3><?php _e('standby trucks', 'wfd_truck')?></h3>
                     <table class="table table-hover">
                         <tbody>
                         <tr>
-                            <td>truck 1</td>
+                            <td><?php _e('truck 1', 'wfd_truck')?></td>
                             <td><a href="#" onClick="return confirm('Are you sure?')"><span
                                             class="glyphicon glyphicon-trash"></span></a></td>
                         </tr>
                         <tr>
-                            <td>truck 2</td>
+                            <td><?php _e('truck 2', 'wfd_truck')?></td>
                             <td><a href="#" onClick="return confirm('Are you sure?')"><span
                                             class="glyphicon glyphicon-trash"></span></a></td>
                         </tr>
                         <tr>
-                            <td>truck 3</td>
+                            <td><?php _e('truck 3', 'wfd_truck')?></td>
                             <td><a href="#" onClick="return confirm('Are you sure?')"><span
                                             class="glyphicon glyphicon-trash"></span></a></td>
                         </tr>
@@ -3468,11 +3468,11 @@ function wfd_handover_view()
                     </table>
                     <span class="glyphicon glyphicon-plus"></span>
                     <select class="selectpicker form-control">
-                        <option>Top 20</option>
-                        <option>International</option>
-                        <option>Euroupa</option>
-                        <option>Asien</option>
-                        <option>Amerikan</option>
+                        <option><?php _e('Top 20', 'wfd_truck')?></option>
+                        <option><?php _e('International', 'wfd_truck')?></option>
+                        <option><?php _e('Europa', 'wfd_truck')?></option>
+                        <option><?php _e('Asia', 'wfd_truck')?></option>
+                        <option><?php _e('America', 'wfd_truck')?></option>
                     </select>
                 </div>
                 <div class="col-sm-6">
@@ -3481,14 +3481,14 @@ function wfd_handover_view()
                         <tr>
                             <td>
                                 <button type="button" class="btn btn-success"><span
-                                            class="glyphicon glyphicon-forward"></span> Next
+                                            class="glyphicon glyphicon-forward"></span> <?php _e('Next', 'wfd_truck')?>
                                 </button>
                             </td>
                         </tr>
                         <tr>
                             <td>
                                 <button type="button" class="btn btn-success"><span
-                                            class="glyphicon glyphicon-backward"></span> Back
+                                            class="glyphicon glyphicon-backward"></span> <?php _e('Back', 'wfd_truck')?>
                                 </button>
                             </td>
                         </tr>
@@ -3499,24 +3499,24 @@ function wfd_handover_view()
             <div id="step3" class="tab-pane fade">
                 <div class="row" id="step3button">
                     <button type="button" class="btn btn-success"><span
-                                class="glyphicon glyphicon-forward"></span> Next
+                                class="glyphicon glyphicon-forward"></span> <?php _e('Next', 'wfd_truck')?>
                     </button>
                 </div>
                 <div class="row" id="step3button">
                     <button type="button" class="btn btn-success"><span
-                                class="glyphicon glyphicon-backward"></span> Back
+                                class="glyphicon glyphicon-backward"></span> <?php _e('Back', 'wfd_truck')?>
                     </button>
                 </div>
             </div>
             <div id="save" class="tab-pane fade">
                 <button type="button" class="btn btn-success"><span
-                            class="glyphicon glyphicon-file"></span> Open PDF file
+                            class="glyphicon glyphicon-file"></span> <?php _e('Open Pdf File', 'wfd_truck')?>
                 </button>
                 <button type="button" class="btn btn-success"><span
-                            class="glyphicon glyphicon-floppy-disk"></span> Save / Send
+                            class="glyphicon glyphicon-floppy-disk"></span> <?php _e('Save / Send', 'wfd_truck')?>
                 </button>
                 <button type="button" class="btn btn-success"><span
-                            class="glyphicon glyphicon-backward"></span> Back
+                            class="glyphicon glyphicon-backward"></span> <?php _e('Back', 'wfd_truck')?>
                 </button>
             </div>
         </div>
