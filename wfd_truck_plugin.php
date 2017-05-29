@@ -2211,7 +2211,7 @@ function wfd_core_data_view($res_client_info)
                                     echo $inputElem;
                                     ?>
                                     <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
-                                    <?php echo $pm->method ?>
+                                    <?php _e($pm->method, 'wfd_truck') ?>
                                 </label>
                             </div>
                         <?php } ?>
@@ -2258,12 +2258,12 @@ function wfd_core_data_view($res_client_info)
                                     }
                                     echo $inputElem;
                                     ?>
-                                    <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span><?php echo $pa->assistance;?>
+                                    <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span><?php _e($pa->assistance, 'wfd_truck');?>
                                     <?php
                                     $i ++;
                                     if ($i > 5){
                                         ?>
-                                        <a class="btn-delete ml10" href="javascript:removeAssistance('<?php echo $pa->assistance;?>')" title="Remove">
+                                        <a class="btn-delete ml10" href="javascript:removeAssistance('<?php _e($pa->assistance, 'wfd_truck');?>')" title="Remove">
                                             <i class="glyphicon glyphicon-remove"></i>
                                         </a>
                                         <?php
@@ -2289,7 +2289,7 @@ function wfd_core_data_view($res_client_info)
                                        style="padding-left: 40px;line-height: 30px;"><?php echo $labelNum ?>.</label>
                                 <div class="col-sm-8">
                                     <input type="text" class="form-control" name="fname"
-                                           value="<?php echo $ms->mobi_service ?>"
+                                           value="<?php _e($ms->mobi_service, 'wfd_truck') ?>"
                                            placeholder="<?php echo __('Car dealer', 'wfd_truck') . " $labelNum" ?>">
                                 </div>
                             </div>
