@@ -263,7 +263,7 @@ $(document).ready(function ($) {
     });
 
     $('#edit-core-data-toggle').click(function (e) {
-        if($(this).attr("class").includes("active") == true) {
+        if($(this).attr("class").includes("btn-save") == true) {
             ezBSAlert({
                 type: "confirm",
                 messageText: ajax_object.saveConformMessage,
@@ -278,11 +278,11 @@ $(document).ready(function ($) {
                     }
                 }
             });
-            $(this).addClass('btn-primary').removeClass('btn-save').html('<span class="glyphicon glyphicon-pencil"></span> Edit');
+            $(this).addClass('btn-primary').removeClass('btn-save').html('<span class="glyphicon glyphicon-pencil"></span> ' + ajax_object.editButtonText);
             activateCoreDataEdit(false);
         }
         else {
-            $(this).addClass('btn-save').removeClass('btn-primary').html('<span class="glyphicon glyphicon-save"></span> End Edit');
+            $(this).addClass('btn-save').removeClass('btn-primary').html('<span class="glyphicon glyphicon-save"></span> ' + ajax_object.endEditButtonText);
             activateCoreDataEdit(true);
         }
     });
@@ -1148,8 +1148,7 @@ function truckPoolFunctions(){
             $('#new_weight').val('');
             $('#new_max_load').val('');
             $('#new_load_height').val('');
-            $('#new_truck_type').val('');
-            $('#new_status').val('');
+            $('#new_car_no').val('');
             $('#new_pheight').val('');
             $('#new_spec_force').val('');
             $('#new_cable_force').val('');
@@ -1160,12 +1159,13 @@ function truckPoolFunctions(){
             $('#new_out_order').val('');
             $('.profile-pic', $('#modal_add_truck')).attr("src", backImgUrl);
             $('#truckModalLabel').text(ajax_object.newTruckTitle);
-            $('#btn_save_truck').prop('disabled', false);
+            $('#btn_save_truck').show();
+            $('input', $('#modal_add_truck')).prop('disabled', false);
             $('#modal_add_truck').data('editMode', false).modal('show');
         }
         else{
             setTruckDataToDlg("", copiedTruckId);
-            $('#btn_save_truck').prop('disabled', false);
+            $('#btn_save_truck').prop('hidden', false);
 
             copiedTruckId = -1;
             $('#modal_add_truck')
@@ -1188,14 +1188,14 @@ function truckPoolFunctions(){
         var new_weight = $('#new_weight').val();
         var new_max_load = $('#new_max_load').val();
         var new_load_height = $('#new_load_height').val();
-        var new_truck_type = $('#new_truck_type').val();
-        var new_status = $('#new_status').val();
+        var new_car_no = $('#new_car_no').val();
         var new_pheight = $('#new_pheight').val();
         var new_spec_force = $('#new_spec_force').val();
         var new_cable_force = $('#new_cable_force').val();
         var new_crane = $('#new_crane').val();
         var new_plength = $('#new_plength').val();
         var new_seats = $('#new_seats').val();
+        var new_truck_type = $('#new_truck_type').val();
         var new_under_lift = $('#new_under_lift').val();
         var new_out_order = $('#new_out_order').prop('checked') == true ? 1:0;
         var new_image=$('.profile-pic', $('#modal_add_truck'));
@@ -1224,8 +1224,7 @@ function truckPoolFunctions(){
                     new_weight: new_weight,
                     new_max_load: new_max_load,
                     new_load_height: new_load_height,
-                    new_truck_type: new_truck_type,
-                    new_status: new_status,
+                    new_car_no: new_car_no,
                     new_pheight: new_pheight,
                     new_spec_force: new_spec_force,
                     new_cable_force: new_cable_force,
@@ -1233,6 +1232,7 @@ function truckPoolFunctions(){
                     new_plength: new_plength,
                     new_motorcycle: new_motorcycle,
                     new_seats: new_seats,
+                    new_truck_type: new_truck_type,
                     new_under_lift: new_under_lift,
                     new_out_order: new_out_order,
                     new_profile_pic: new_image.prop('src')
@@ -1252,13 +1252,14 @@ function truckPoolFunctions(){
                                 $('#truck-list').bootstrapTable('updateByUniqueId', {
                                     id: selId,
                                     row: {
-                                        truckId: new_truck_id,
-                                        brand: new_brand,
+                                        carNo: new_car_no,
                                         weight: new_weight,
-                                        maxload: new_max_load,
-                                        lheight: new_load_height,
+                                        plateauHeight: new_pheight,
+                                        spectracleForce: new_spec_force,
+                                        plateauLength: new_plength,
+                                        seats: new_seats,
                                         type: new_truck_type,
-                                        status: new_status,
+                                        motorcycle: outorderCheck(new_motorcycle == "true" ? 1 : 0),
                                         outorder: outorderCheck(new_out_order),
                                         action: ''
                                     }
@@ -1293,8 +1294,7 @@ function truckPoolFunctions(){
                     new_weight: new_weight,
                     new_max_load: new_max_load,
                     new_load_height: new_load_height,
-                    new_truck_type: new_truck_type,
-                    new_status: new_status,
+                    new_car_no: new_car_no,
                     new_pheight: new_pheight,
                     new_spec_force: new_spec_force,
                     new_cable_force: new_cable_force,
@@ -1302,6 +1302,7 @@ function truckPoolFunctions(){
                     new_plength: new_plength,
                     new_motorcycle: new_motorcycle,
                     new_seats: new_seats,
+                    new_truck_type: new_truck_type,
                     new_under_lift: new_under_lift,
                     new_out_order: new_out_order,
                     new_image: new_image.prop('src'),
@@ -1328,13 +1329,14 @@ function truckPoolFunctions(){
                                 $('#modal_add_truck').modal('hide');
                                 $('#truck-list').bootstrapTable('append', [{
                                     id: response.clientId,
-                                    truckId: new_truck_id,
-                                    brand: new_brand,
+                                    carNo: new_car_no,
                                     weight: new_weight,
-                                    maxload: new_max_load,
-                                    lheight: new_load_height,
+                                    plateauHeight: new_pheight,
+                                    spectracleForce: new_spec_force,
+                                    plateauLength: new_plength,
+                                    seats: new_seats,
                                     type: new_truck_type,
-                                    status: new_status,
+                                    motorcycle: outorderCheck(new_motorcycle == "true" ? 1 : 0),
                                     outorder: outorderCheck(new_out_order),
                                     action: ''
                                 }]);
@@ -1367,12 +1369,12 @@ function setTruckDataToDlg(row, selId) {
         },
         function (response) {
             $('#new_truck_id').val(response.truck_ID);
+            $('#new_car_no').val(response.carNo)
             $('#new_brand').val(response.brand);
             $('#new_weight').val(response.weight);
             $('#new_max_load').val(response.max_load);
             $('#new_load_height').val(response.load_height);
             $('#new_truck_type').val(response.type);
-            $('#new_status').val(response.status);
             $('#new_pheight').val(response.plateau_height);
             $('#new_plength').val(response.plateau_lengh);
             $('#new_spec_force').val(response.spectacle_force);
@@ -1393,7 +1395,8 @@ window.truckPoolActionEvents = {
     'click .btn-view': function (e, value, row, index){
         var selId = row.id;
         setTruckDataToDlg(row, selId);
-        $('#btn_save_truck').prop('disabled', true);
+        $('#btn_save_truck').hide();
+        $('input', $('#modal_add_truck')).prop('disabled', true);
 
         $('#modal_add_truck')
             .data('editMode', true)
@@ -1403,7 +1406,8 @@ window.truckPoolActionEvents = {
     'click .btn-edit': function (e, value, row, index) {
         var selId = row.id;
         setTruckDataToDlg(row, selId);
-        $('#btn_save_truck').prop('disabled', false);
+        $('#btn_save_truck').show();
+        $('input', $('#modal_add_truck')).prop('disabled', false);
 
         $('#modal_add_truck')
             .data('editMode', true)
@@ -1469,6 +1473,8 @@ function pricesFunctions() {
     $('#btn_save_service').click(function (e) {
 
         var new_service = $('#new_service').val();
+        var new_service_time = $('#new_service_time').val();
+        var new_service_date = $('#new_service_date').val();
         var new_description = $('#new_description').val();
         var new_price = $('#new_price').val();
         if ($.trim(new_service).length == 0 || $.trim(new_description).length == 0 || $.trim(new_price).length == 0) {
@@ -1490,8 +1496,10 @@ function pricesFunctions() {
                     clientId: clientId,
                     selId: selId,
                     new_service: new_service,
+                    new_service_date: new_service_date,
+                    new_service_time: new_service_time,
                     new_description: new_description,
-                    new_price: new_price,
+                    new_price: new_price
                 };
                 $.post(
                     ajax_object.ajax_url,
@@ -1509,6 +1517,8 @@ function pricesFunctions() {
                                     id: selId,
                                     row: {
                                         service: new_service,
+                                        serviceTime: new_service_time,
+                                        serviceDate: new_service_date,
                                         description: new_description,
                                         price: new_price,
                                         action: ''
@@ -1540,8 +1550,10 @@ function pricesFunctions() {
                     action: 'wfd_add_service',
                     clientId: clientId,
                     new_service: new_service,
+                    new_service_time: new_service_time,
+                    new_service_date: new_service_date,
                     new_description: new_description,
-                    new_price: new_price,
+                    new_price: new_price
                 };
                 $.post(ajax_object.ajax_url,
                     data,
@@ -1563,7 +1575,15 @@ function pricesFunctions() {
                                 okButtonText: ajax_object.okText
                             }).done(function (e) {
                                 $('#modal_add_service').modal('hide');
-                                $('#service-list').bootstrapTable('append', [{id: response.clientId, service: new_service, description: new_description, price: new_price, action: ""}]);
+                                $('#service-list').bootstrapTable('append', [{
+                                    id: response.clientId,
+                                    service: new_service,
+                                    serviceTime: new_service_time,
+                                    serviceDate: new_service_date,
+                                    description: new_description,
+                                    price: new_price,
+                                    action: ""
+                                }]);
                             });
                         }
                     },
@@ -1583,6 +1603,8 @@ function pricesFunctions() {
 
     $('.btn-add-service').click(function (e) {
         $('#new_service').val('');
+        $('#new_service_time').val('');
+        $('#new_service_date').val('');
         $('#new_description').val('');
         $('#new_price').val('');
         $('#serviceModalLabel').text(ajax_object.newPricesTitle);
@@ -1595,6 +1617,8 @@ function pricesFunctions() {
 
 function setServiceDataToDlg(row, editMode) {
     $('#new_service').val(row.service);
+    $('#new_service_time').val(row.serviceTime);
+    $('#new_service_date').val(row.serviceDate);
     $('#new_description').val(row.description);
     $('#new_price').val(row.price);
 }
@@ -1973,9 +1997,9 @@ function ezBSAlert(options) {
         modalSize: 'modal-sm', //modal-sm, modal-lg
         okButtonText: 'Ok',
         cancelButtonText: 'Cancel',
-        yesButtonText: 'Yes',
-        noButtonText: 'No',
-        headerText: 'Attention',
+        yesButtonText: ajax_object.yesButtonText,
+        noButtonText: ajax_object.noButtonText,
+        headerText: ajax_object.attentionMessageTitleText,
         messageText: 'Message',
         alertType: 'default', //default, primary, success, info, warning, danger
         inputFieldType: 'text' //could ask for number,email,etc

@@ -211,7 +211,6 @@ input:checked + .slider:before {
     margin-top: 0px !important;
     margin-bottom: 0px !important;
     padding-left: 0px;
-    height: 28px;
 }
 .btn-save{
     background: darkolivegreen !important;
@@ -241,6 +240,7 @@ input[type=time]::-webkit-outer-spin-button {
 }
 .modal-footer{
     margin-top:0px;
+    border-top: none;
 }
 .ml10 {
     margin-left: 10px;
@@ -296,6 +296,26 @@ input[type=time]::-webkit-outer-spin-button {
 .rating-xs {
     display: inline-flex;
 }
-p{
+p, .form-group>label, h2, h3{
     display: inline-flex;
+}
+.row .form-group{
+    display: inline-flex !important;
+}
+.row > label{
+    display: inline-flex !important;
+    text-align: left !important;
+}
+.core-data > .row{
+    width: 110%;
+}
+
+.container{
+    width: 90% !important;
+}
+.th-inner{
+    font-size: 14px;
+}
+.fixed-table-body {
+    height: inherit !important;
 }
